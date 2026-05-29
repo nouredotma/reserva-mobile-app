@@ -5,6 +5,7 @@ import 'package:reservamobile/features/account/presentation/account_screen.dart'
 import 'package:reservamobile/features/account/presentation/bookings_screen.dart';
 import 'package:reservamobile/features/home/presentation/home_screen.dart';
 import 'package:reservamobile/features/search/presentation/search_screen.dart';
+import 'package:reservamobile/features/shell/presentation/widgets/floating_bottom_nav.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -27,36 +28,15 @@ class _MainShellState extends ConsumerState<MainShell> {
   Widget build(BuildContext context) {
     ref.watch(authSessionProvider);
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(index: _selectedIndex, children: _tabs),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: FloatingBottomNav(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() {
             _selectedIndex = index;
           });
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.search),
-            selectedIcon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Bookings',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Account',
-          ),
-        ],
       ),
     );
   }

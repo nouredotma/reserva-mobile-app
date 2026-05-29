@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 
 class DetailScreen extends ConsumerWidget {
   const DetailScreen({super.key, required this.establishmentId});
@@ -32,14 +33,14 @@ class DetailScreen extends ConsumerWidget {
         final reviews = data[2] as List<ReviewItem>;
 
         if (establishment == null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Detail')),
-            body: const Center(child: Text('Establishment not found')),
+          return const ScrollAwareScaffold(
+            title: 'Detail',
+            body: Center(child: Text('Establishment not found')),
           );
         }
 
-        return Scaffold(
-          appBar: AppBar(title: Text(establishment.name)),
+        return ScrollAwareScaffold(
+          title: establishment.name,
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [

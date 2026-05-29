@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/core/auth/auth_session_controller.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -11,8 +12,8 @@ class AccountScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authSessionProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+    return ScrollAwareScaffold(
+      title: 'Account',
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

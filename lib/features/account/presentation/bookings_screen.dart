@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/core/auth/auth_session_controller.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -12,8 +13,8 @@ class BookingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authSessionProvider);
     if (!authState.isLoggedIn) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('My Bookings')),
+      return ScrollAwareScaffold(
+        title: 'My Bookings',
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -31,8 +32,8 @@ class BookingsScreen extends ConsumerWidget {
     }
 
     final bookingsAsync = ref.watch(userBookingsProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Bookings')),
+    return ScrollAwareScaffold(
+      title: 'My Bookings',
       body: bookingsAsync.when(
         data: (bookings) {
           if (bookings.isEmpty) {

@@ -5,6 +5,7 @@ import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/core/auth/auth_session_controller.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   const BookingScreen({super.key, required this.establishmentId});
@@ -58,14 +59,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         _serviceId ??= services.isNotEmpty ? services.first.id : null;
 
         if (establishment == null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Booking')),
-            body: const Center(child: Text('Establishment not found')),
+          return const ScrollAwareScaffold(
+            title: 'Booking',
+            body: Center(child: Text('Establishment not found')),
           );
         }
 
-        return Scaffold(
-          appBar: AppBar(title: Text('Book ${establishment.name}')),
+        return ScrollAwareScaffold(
+          title: 'Book ${establishment.name}',
           body: Form(
             key: _formKey,
             child: ListView(

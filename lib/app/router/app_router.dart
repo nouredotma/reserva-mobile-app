@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:reservamobile/features/booking/presentation/booking_screen.dart';
 import 'package:reservamobile/features/detail/presentation/detail_screen.dart';
 import 'package:reservamobile/features/auth/presentation/login_screen.dart';
+import 'package:reservamobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:reservamobile/features/reviews/presentation/reviews_screen.dart';
 import 'package:reservamobile/features/shell/presentation/main_shell.dart';
 import 'package:reservamobile/features/splash/presentation/splash_screen.dart';
@@ -10,6 +11,7 @@ class AppRoute {
   static const String splash = '/';
   static const String shell = '/app';
   static const String login = '/login';
+  static const String notifications = '/notifications';
   static String detail(String id) => '/detail/$id';
   static String booking(String id) => '/booking/$id';
   static String reviews(String id) => '/reviews/$id';
@@ -29,6 +31,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoute.login,
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: AppRoute.notifications,
+      builder: (context, state) => const NotificationsScreen(),
     ),
     GoRoute(
       path: '/detail/:id',

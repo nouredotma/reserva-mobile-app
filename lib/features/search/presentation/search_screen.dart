@@ -5,6 +5,7 @@ import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/core/config/mapbox_config.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 import 'package:reservamobile/features/search/presentation/search_map_section.dart';
 
 class SearchScreen extends ConsumerWidget {
@@ -16,8 +17,8 @@ class SearchScreen extends ConsumerWidget {
     final citiesAsync = ref.watch(citiesProvider);
     final resultsAsync = ref.watch(searchedEstablishmentsProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
+    return ScrollAwareScaffold(
+      title: 'Search',
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

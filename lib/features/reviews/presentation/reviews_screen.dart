@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 
 class ReviewsScreen extends ConsumerStatefulWidget {
   const ReviewsScreen({super.key, required this.establishmentId});
@@ -29,8 +30,8 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
       future: repository.getReviewsForEstablishment(widget.establishmentId),
       builder: (context, snapshot) {
         final reviews = snapshot.data ?? const <ReviewItem>[];
-        return Scaffold(
-          appBar: AppBar(title: const Text('Reviews')),
+        return ScrollAwareScaffold(
+          title: 'Reviews',
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [

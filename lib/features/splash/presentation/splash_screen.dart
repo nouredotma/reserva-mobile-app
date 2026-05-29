@@ -25,12 +25,13 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     );
-    _reveal = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutCubic,
+    const revealCurve = Cubic(0.25, 0.1, 0.25, 1);
+    // Web: clipPath inset(0 65% 0 0), nudged to show a bit more on the left.
+    _reveal = Tween<double>(begin: 0.42, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: revealCurve),
     );
-    _shift = Tween<double>(begin: 91, end: 0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    _shift = Tween<double>(begin: 82, end: 0).animate(
+      CurvedAnimation(parent: _controller, curve: revealCurve),
     );
     _controller.forward();
     _runBootstrap();
@@ -85,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen>
                 return ClipRect(
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    widthFactor: _reveal.value.clamp(0.0, 1.0),
+                    widthFactor: _reveal.value,
                     child: Transform.translate(
                       offset: Offset(_shift.value, 0),
                       child: child,

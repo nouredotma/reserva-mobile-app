@@ -5,6 +5,7 @@ import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/core/assets/app_assets.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
+import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -14,10 +15,21 @@ class HomeScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesProvider);
     final featuredAsync = ref.watch(featuredEstablishmentsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Image.asset(AppAssets.logo, width: 120, fit: BoxFit.contain),
+    return ScrollAwareScaffold(
+      titleBuilder: (isScrolled) => Image.asset(
+        isScrolled ? AppAssets.logoWhite : AppAssets.logo,
+        height: 36,
+        fit: BoxFit.contain,
+        semanticLabel: 'Reserva logo',
       ),
+      actions: [
+        IconButton(
+          tooltip: 'Notifications',
+          iconSize: ScrollAwareScaffold.toolbarIconSize,
+          onPressed: () => context.push(AppRoute.notifications),
+          icon: const Icon(Icons.notifications_outlined),
+        ),
+      ],
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
