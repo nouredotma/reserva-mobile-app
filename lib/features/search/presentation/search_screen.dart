@@ -110,7 +110,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ],
           ),
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (err, _) => const SizedBox.shrink(),
         ),
         const SizedBox(height: 10),
         // Category pills
@@ -133,7 +133,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ],
           ),
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (err, _) => const SizedBox.shrink(),
         ),
         const SizedBox(height: 18),
         resultsAsync.when(
@@ -201,7 +201,7 @@ class _PillRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
         itemCount: children.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) => children[index],
       ),
     );
@@ -297,7 +297,7 @@ class _FilterSheet extends ConsumerWidget {
                       ],
                     ),
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (err, _) => const SizedBox.shrink(),
                   ),
               const SizedBox(height: 20),
             ],

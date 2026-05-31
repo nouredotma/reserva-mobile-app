@@ -34,7 +34,7 @@ class AppNetworkImage extends StatelessWidget {
           ),
         ),
       ),
-      errorWidget: (context, _, __) => const ColoredBox(
+      errorWidget: (context, url, error) => const ColoredBox(
         color: Color(0xFFEDEDED),
         child: Icon(Icons.image_not_supported_outlined, color: AppColors.navBarIcon),
       ),

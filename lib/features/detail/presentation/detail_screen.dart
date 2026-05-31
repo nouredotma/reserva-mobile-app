@@ -138,7 +138,7 @@ class _DetailView extends ConsumerWidget {
                       lang: lang,
                     ),
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (err, _) => const SizedBox.shrink(),
                   ),
                   // Services
                   const SizedBox(height: 8),
@@ -158,7 +158,7 @@ class _DetailView extends ConsumerWidget {
                           .toList(growable: false),
                     ),
                     loading: () => const _MiniLoader(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (err, _) => const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 12),
                   // Location
@@ -755,7 +755,7 @@ class _ReviewsPreview extends StatelessWidget {
         );
       },
       loading: () => const _MiniLoader(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (err, _) => const SizedBox.shrink(),
     );
   }
 }
