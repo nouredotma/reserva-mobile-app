@@ -6,18 +6,12 @@ import 'package:reservamobile/features/account/presentation/bookings_screen.dart
 import 'package:reservamobile/features/home/presentation/home_screen.dart';
 import 'package:reservamobile/features/search/presentation/search_screen.dart';
 import 'package:reservamobile/features/shell/presentation/widgets/floating_bottom_nav.dart';
+import 'package:reservamobile/features/shell/shell_providers.dart';
 
-class MainShell extends ConsumerStatefulWidget {
+class MainShell extends ConsumerWidget {
   const MainShell({super.key});
 
-  @override
-  ConsumerState<MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends ConsumerState<MainShell> {
-  int _selectedIndex = 0;
-
-  late final List<Widget> _tabs = const [
+  static const List<Widget> _tabs = <Widget>[
     HomeScreen(),
     SearchScreen(),
     BookingsScreen(),
@@ -25,18 +19,16 @@ class _MainShellState extends ConsumerState<MainShell> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(authSessionProvider);
+    final int selectedIndex = ref.watch(shellTabProvider);
     return Scaffold(
       extendBody: true,
-      body: IndexedStack(index: _selectedIndex, children: _tabs),
+      body: IndexedStack(index: selectedIndex, children: _tabs),
       bottomNavigationBar: FloatingBottomNav(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) =>
+            ref.read(shellTabProvider.notifier).state = index,
       ),
     );
   }

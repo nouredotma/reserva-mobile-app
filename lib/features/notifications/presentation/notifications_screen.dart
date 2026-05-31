@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:reservamobile/app/theme/app_colors.dart';
-import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
+import 'package:reservamobile/core/widgets/app_scaffold.dart';
 
 class _NotificationItem {
   const _NotificationItem({
@@ -41,20 +41,19 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScrollAwareScaffold(
+    return AppScaffold(
       title: 'Notifications',
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _mockNotifications.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final item = _mockNotifications[index];
-          return Card(
+      children: [
+        for (var i = 0; i < _mockNotifications.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          Card(
             child: ListTile(
-              title: Text(item.title),
-              subtitle: Text('${item.body}\n${item.timeLabel}'),
+              title: Text(_mockNotifications[i].title),
+              subtitle: Text(
+                '${_mockNotifications[i].body}\n${_mockNotifications[i].timeLabel}',
+              ),
               isThreeLine: true,
-              trailing: item.isUnread
+              trailing: _mockNotifications[i].isUnread
                   ? const Icon(
                       Icons.circle,
                       size: 10,
@@ -62,9 +61,9 @@ class NotificationsScreen extends StatelessWidget {
                     )
                   : null,
             ),
-          );
-        },
-      ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -43,8 +43,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/booking/:id',
-      builder: (context, state) =>
-          BookingScreen(establishmentId: state.pathParameters['id'] ?? ''),
+      builder: (context, state) => BookingScreen(
+        establishmentId: state.pathParameters['id'] ?? '',
+        initialServiceId: state.extra is String ? state.extra as String : null,
+      ),
     ),
     GoRoute(
       path: '/reviews/:id',

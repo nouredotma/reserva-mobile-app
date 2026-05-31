@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reservamobile/core/auth/auth_session_controller.dart';
-import 'package:reservamobile/core/widgets/scroll_aware_scaffold.dart';
+import 'package:reservamobile/core/widgets/app_scaffold.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -28,13 +28,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ScrollAwareScaffold(
+    return AppScaffold(
       title: 'Login',
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+      children: [
+        Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Text(
               'Sign in to continue with bookings.',
               style: Theme.of(context).textTheme.bodyLarge,
@@ -96,9 +97,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
               child: Text(_saving ? 'Signing in...' : 'Sign in'),
             ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

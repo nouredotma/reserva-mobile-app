@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reservamobile/app/theme/app_colors.dart';
+import 'package:reservamobile/core/i18n/app_strings.dart';
 
-class FloatingBottomNav extends StatelessWidget {
+class FloatingBottomNav extends ConsumerWidget {
   const FloatingBottomNav({
     super.key,
     required this.selectedIndex,
@@ -11,36 +13,20 @@ class FloatingBottomNav extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
-  static const _destinations = [
-    _NavDestination(
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-      label: 'Home',
-    ),
-    _NavDestination(
-      icon: Icons.search,
-      selectedIcon: Icons.search,
-      label: 'Search',
-    ),
-    _NavDestination(
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-      label: 'Booking',
-    ),
-    _NavDestination(
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-      label: 'Account',
-    ),
-  ];
-
   static const _innerPaddingVertical = 6.0;
   static const _innerPaddingHorizontal = 4.0;
   static const _pillInset = 4.0;
   static const _outerMargin = 12.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppStrings t = ref.watch(stringsProvider);
+    final List<_NavDestination> destinations = <_NavDestination>[
+      _NavDestination(icon: Icons.home_outlined, selectedIcon: Icons.home, label: t.navHome),
+      _NavDestination(icon: Icons.search, selectedIcon: Icons.search, label: t.navSearch),
+      _NavDestination(icon: Icons.receipt_long_outlined, selectedIcon: Icons.receipt_long, label: t.navBookings),
+      _NavDestination(icon: Icons.person_outline, selectedIcon: Icons.person, label: t.navAccount),
+    ];
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
@@ -54,13 +40,6 @@ class FloatingBottomNav extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.navBar,
           borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -71,7 +50,7 @@ class FloatingBottomNav extends StatelessWidget {
             height: 52,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final itemCount = _destinations.length;
+                final itemCount = destinations.length;
                 final itemWidth = constraints.maxWidth / itemCount;
                 final pillWidth = itemWidth - _pillInset * 2;
 
@@ -93,7 +72,7 @@ class FloatingBottomNav extends StatelessWidget {
                     ),
                     Row(
                       children: List.generate(itemCount, (index) {
-                        final destination = _destinations[index];
+                        final destination = destinations[index];
                         final isSelected = selectedIndex == index;
 
                         return Expanded(
