@@ -194,6 +194,16 @@ class AccountScreen extends ConsumerWidget {
           label: t.notifications,
           onTap: () => context.push(AppRoute.notifications),
         ),
+        _MenuTile(
+          icon: Icons.support_agent_outlined,
+          label: lang.isFrench ? 'Support' : 'Contact Support',
+          onTap: () => context.push(AppRoute.support),
+          backgroundColor: const Color(0xFFF0FDF4),
+          borderColor: const Color(0xFF86EFAC),
+          textColor: const Color(0xFF15803D),
+          iconColor: const Color(0xFF15803D),
+          chevronColor: const Color(0xFF16A34A),
+        ),
         if (authState.isLoggedIn) ...<Widget>[
           const SizedBox(height: 8),
           OutlinedButton(
@@ -254,10 +264,24 @@ class _LangButton extends StatelessWidget {
 }
 
 class _MenuTile extends StatelessWidget {
-  const _MenuTile({required this.icon, required this.label, required this.onTap});
+  const _MenuTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.backgroundColor,
+    this.borderColor,
+    this.textColor,
+    this.iconColor,
+    this.chevronColor,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final Color? textColor;
+  final Color? iconColor;
+  final Color? chevronColor;
 
   @override
   Widget build(BuildContext context) {
@@ -267,16 +291,25 @@ class _MenuTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: backgroundColor ?? AppColors.surface,
           borderRadius: BorderRadius.circular(kRadiusSm),
-          border: Border.all(color: const Color(0xFFEDEDED)),
+          border: Border.all(color: borderColor ?? const Color(0xFFEDEDED)),
         ),
         child: Row(
           children: <Widget>[
-            Icon(icon, size: 22, color: AppColors.textPrimary),
+            Icon(icon, size: 22, color: iconColor ?? AppColors.textPrimary),
             const SizedBox(width: 14),
-            Expanded(child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
-            const Icon(Icons.chevron_right, color: Color(0xFF9E9E9E)),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: textColor ?? AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: chevronColor ?? const Color(0xFF9E9E9E)),
           ],
         ),
       ),

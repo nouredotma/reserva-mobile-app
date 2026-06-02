@@ -155,7 +155,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 14,
                                 height: 1.15,
                                 fontWeight:
                                     item.isUnread ? FontWeight.w700 : FontWeight.w600,
@@ -167,7 +167,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           Text(
                             item.timeLabel,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Color(0xFF8A8A8A),
                             ),
                           ),
@@ -177,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         item.body,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           height: 1.35,
                           color: Color(0xFF666666),
                         ),

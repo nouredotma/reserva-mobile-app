@@ -5,11 +5,13 @@ import 'package:reservamobile/features/auth/presentation/login_screen.dart';
 import 'package:reservamobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:reservamobile/features/reviews/presentation/reviews_screen.dart';
 import 'package:reservamobile/features/shell/presentation/main_shell.dart';
+import 'package:reservamobile/features/support/presentation/support_screen.dart';
 
 class AppRoute {
   static const String shell = '/app';
   static const String login = '/login';
   static const String notifications = '/notifications';
+  static const String support = '/support';
   static String detail(String id) => '/detail/$id';
   static String booking(String id) => '/booking/$id';
   static String reviews(String id) => '/reviews/$id';
@@ -29,6 +31,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoute.notifications,
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: AppRoute.support,
+      builder: (context, state) => const SupportScreen(),
     ),
     GoRoute(
       path: '/detail/:id',
