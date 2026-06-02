@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reservamobile/app/router/app_router.dart';
@@ -9,8 +10,8 @@ import 'package:reservamobile/core/i18n/app_strings.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
 import 'package:reservamobile/core/widgets/app_network_image.dart';
-import 'package:reservamobile/core/widgets/app_scaffold.dart';
 import 'package:reservamobile/core/widgets/ui_kit.dart';
+import 'package:reservamobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:reservamobile/features/shell/shell_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -32,80 +33,196 @@ class HomeScreen extends ConsumerWidget {
     final citiesAsync = ref.watch(citiesProvider);
     final featuredAsync = ref.watch(featuredEstablishmentsProvider);
 
-    return AppScaffold(
-      padding: kScreenContentPadding,
-      titleWidget: Image.asset(
-        AppAssets.logo,
-        height: 34,
-        fit: BoxFit.contain,
-        semanticLabel: 'Reserva logo',
-      ),
-      actions: <Widget>[
-        IconButton(
-          tooltip: t.notifications,
-          iconSize: AppScaffold.toolbarIconSize,
-          onPressed: () => context.push(AppRoute.notifications),
-          icon: const Icon(Icons.notifications_outlined),
-        ),
-      ],
-      children: <Widget>[
-        categoriesAsync.when(
-          data: (categories) => _CategoriesGrid(
-            categories: categories,
-            language: lang,
-            onTap: (c) => _openSearch(ref, category: c.key),
-          ),
-          loading: () => const _Loader(),
-          error: (err, _) => Text('${t.loadError}: $err'),
-        ),
-        const SizedBox(height: 24),
-        _CitiesSectionHeader(
-          title: t.homeCitiesTitle,
-          subtitle: t.homeCitiesSubtitle,
-        ),
-        const SizedBox(height: 14),
-        citiesAsync.when(
-          data: (cities) => Column(
-            children: cities
-                .map(
-                  (city) => _CityCard(
-                    city: city,
-                    language: lang,
-                    onTap: () => _openSearch(ref, cityId: city.id),
-                  ),
-                )
-                .toList(growable: false),
-          ),
-          loading: () => const _Loader(),
-          error: (err, _) => Text('${t.loadError}: $err'),
-        ),
-        const SizedBox(height: 24),
-        HomeSectionTitle(title: t.homeFeaturedTitle),
-        featuredAsync.when(
-          data: (items) {
-            final double cardWidth = MediaQuery.sizeOf(context).width * 0.85;
-            final double carouselHeight = cardWidth * 10 / 16 + 76;
-            return SizedBox(
-              height: carouselHeight,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.zero,
-                children: items
-                    .map(
-                      (item) => FeaturedCard(
-                        width: cardWidth,
-                        establishment: item,
-                        onTap: () => context.push(AppRoute.detail(item.id)),
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final double heroHeight = screenSize.height * 0.40;
+    final double overlap = 28;
+    final double contentTopOffset = (heroHeight - kToolbarHeight - overlap).clamp(0.0, heroHeight);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: <Widget>[
+            SizedBox(
+              height: heroHeight + MediaQuery.viewPaddingOf(context).top,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  Image.asset(AppAssets.login, fit: BoxFit.cover),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[
+                          Color(0x73000000),
+                          Color(0x29000000),
+                          Color(0x05000000),
+                        ],
                       ),
-                    )
-                    .toList(growable: false),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-          loading: () => const _Loader(),
-          error: (err, _) => Text('${t.loadError}: $err'),
+            ),
+            SafeArea(
+              bottom: false,
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  SliverAppBar(
+                    pinned: false,
+                    floating: false,
+                    snap: false,
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    surfaceTintColor: Colors.transparent,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    title: Image.asset(
+                      AppAssets.logoWhite,
+                      height: 34,
+                      fit: BoxFit.contain,
+                      semanticLabel: 'Reserva logo',
+                    ),
+                    actions: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.navBar,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: IconButton(
+                            tooltip: t.notifications,
+                            iconSize: 21,
+                            visualDensity: VisualDensity.compact,
+                            splashRadius: 21,
+                            color: AppColors.navBarIcon,
+                            onPressed: () => context.push(AppRoute.notifications),
+                            icon: Stack(
+                              clipBehavior: Clip.none,
+                              children: <Widget>[
+                                const Icon(Icons.notifications_outlined),
+                                if (hasUnreadNotifications)
+                                  Positioned(
+                                    right: -1,
+                                    top: -1,
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: Colors.redAccent,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: AppColors.navBar, width: 1),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: contentTopOffset,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            t.homeHeroTagline,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 120),
+                      decoration: const BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          categoriesAsync.when(
+                            data: (categories) => _CategoriesGrid(
+                              categories: categories,
+                              language: lang,
+                              onTap: (c) => _openSearch(ref, category: c.key),
+                            ),
+                            loading: () => const _CategoriesGridSkeleton(),
+                            error: (err, _) => Text('${t.loadError}: $err'),
+                          ),
+                          const SizedBox(height: 24),
+                          _CitiesSectionHeader(
+                            title: t.homeCitiesTitle,
+                            subtitle: t.homeCitiesSubtitle,
+                          ),
+                          const SizedBox(height: 6),
+                          citiesAsync.when(
+                            data: (cities) => Column(
+                              children: cities
+                                  .map(
+                                    (city) => _CityCard(
+                                      city: city,
+                                      language: lang,
+                                      onTap: () => _openSearch(ref, cityId: city.id),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                            ),
+                            loading: () => const _CitiesListSkeleton(),
+                            error: (err, _) => Text('${t.loadError}: $err'),
+                          ),
+                          const SizedBox(height: 24),
+                          HomeSectionTitle(title: t.homeFeaturedTitle),
+                          featuredAsync.when(
+                            data: (items) {
+                              final double cardWidth = MediaQuery.sizeOf(context).width * 0.85;
+                              final double carouselHeight = cardWidth * 10 / 16 + 76;
+                              return SizedBox(
+                                height: carouselHeight,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: EdgeInsets.zero,
+                                  children: items
+                                      .map(
+                                        (item) => FeaturedCard(
+                                          width: cardWidth,
+                                          establishment: item,
+                                          onTap: () => context.push(AppRoute.detail(item.id)),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                ),
+                              );
+                            },
+                            loading: () => const _FeaturedCarouselSkeleton(),
+                            error: (err, _) => Text('${t.loadError}: $err'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -119,7 +236,7 @@ class _CitiesSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -147,13 +264,65 @@ class _CitiesSectionHeader extends StatelessWidget {
   }
 }
 
-class _Loader extends StatelessWidget {
-  const _Loader();
+class _CategoriesGridSkeleton extends StatelessWidget {
+  const _CategoriesGridSkeleton();
+
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
-      );
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.38,
+      ),
+      itemBuilder: (_, _) => const AppSkeletonBox(
+        height: double.infinity,
+      ),
+    );
+  }
+}
+
+class _CitiesListSkeleton extends StatelessWidget {
+  const _CitiesListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const <Widget>[
+        AppSkeletonBox(height: 200),
+        SizedBox(height: 14),
+        AppSkeletonBox(height: 200),
+      ],
+    );
+  }
+}
+
+class _FeaturedCarouselSkeleton extends StatelessWidget {
+  const _FeaturedCarouselSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final double cardWidth = MediaQuery.sizeOf(context).width * 0.85;
+    final double carouselHeight = cardWidth * 10 / 16 + 76;
+    return SizedBox(
+      height: carouselHeight,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        children: const <Widget>[
+          SizedBox(width: 1),
+          AppSkeletonBox(width: 280, height: double.infinity),
+          SizedBox(width: 12),
+          AppSkeletonBox(width: 280, height: double.infinity),
+        ],
+      ),
+    );
+  }
 }
 
 class _CategoriesGrid extends StatelessWidget {
@@ -176,8 +345,8 @@ class _CategoriesGrid extends StatelessWidget {
       itemCount: categories.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
         childAspectRatio: 1.38,
       ),
       itemBuilder: (context, index) {
@@ -185,7 +354,7 @@ class _CategoriesGrid extends StatelessWidget {
         return GestureDetector(
           onTap: () => onTap(category),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(kRadiusMd),
+            borderRadius: BorderRadius.circular(kRadiusSm),
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
@@ -264,7 +433,7 @@ class _CityCard extends StatelessWidget {
         height: 200,
         margin: const EdgeInsets.only(bottom: 14),
         clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(kRadiusMd)),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(kRadiusSm)),
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[

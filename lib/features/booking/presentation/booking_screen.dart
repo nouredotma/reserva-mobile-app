@@ -69,14 +69,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     final servicesAsync = ref.watch(servicesProvider(widget.establishmentId));
 
     return estAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const _BookingScreenSkeleton(),
       error: (err, _) => Scaffold(appBar: AppBar(), body: Center(child: Text('$err'))),
       data: (establishment) {
         if (establishment == null) {
           return Scaffold(appBar: AppBar(), body: const Center(child: Text('Not found')));
         }
         return servicesAsync.when(
-          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+          loading: () => const _BookingScreenSkeleton(),
           error: (err, _) => Scaffold(appBar: AppBar(), body: Center(child: Text('$err'))),
           data: (services) {
             if (services.isEmpty) {
@@ -717,6 +717,44 @@ class _CheckRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BookingScreenSkeleton extends StatelessWidget {
+  const _BookingScreenSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      title: '',
+      padding: const EdgeInsets.fromLTRB(
+        kScreenPaddingHorizontal,
+        4,
+        kScreenPaddingHorizontal,
+        40,
+      ),
+      children: const <Widget>[
+        AppSkeletonBox(width: 150, height: 22),
+        SizedBox(height: 10),
+        AppSkeletonBox(height: 74),
+        SizedBox(height: 10),
+        AppSkeletonBox(height: 74),
+        SizedBox(height: 20),
+        AppSkeletonBox(width: 80, height: 16),
+        SizedBox(height: 8),
+        AppSkeletonBox(height: 50),
+        SizedBox(height: 16),
+        AppSkeletonBox(width: 60, height: 16),
+        SizedBox(height: 8),
+        AppSkeletonBox(height: 46),
+        SizedBox(height: 16),
+        AppSkeletonBox(width: 70, height: 16),
+        SizedBox(height: 8),
+        AppSkeletonBox(height: 50, radius: 999),
+        SizedBox(height: 22),
+        AppSkeletonBox(height: 54),
+      ],
     );
   }
 }

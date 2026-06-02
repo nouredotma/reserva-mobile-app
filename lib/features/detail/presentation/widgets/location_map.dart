@@ -16,7 +16,7 @@ class LocationMap extends StatelessWidget {
   Widget build(BuildContext context) {
     final LatLng point = LatLng(coordinates.lat, coordinates.lng);
     final Widget map = ClipRRect(
-      borderRadius: BorderRadius.circular(kRadiusLg),
+      borderRadius: BorderRadius.circular(kRadiusSm),
       child: SizedBox(
         height: 200,
         child: MapboxConfig.isConfigured

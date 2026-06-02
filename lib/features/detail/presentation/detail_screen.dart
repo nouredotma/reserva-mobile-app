@@ -14,6 +14,7 @@ import 'package:reservamobile/core/widgets/app_network_image.dart';
 import 'package:reservamobile/core/widgets/app_scaffold.dart';
 import 'package:reservamobile/core/widgets/ui_kit.dart';
 import 'package:reservamobile/features/detail/presentation/widgets/location_map.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailScreen extends ConsumerWidget {
   const DetailScreen({super.key, required this.establishmentId});
@@ -26,7 +27,7 @@ class DetailScreen extends ConsumerWidget {
     final estAsync = ref.watch(establishmentByIdProvider(establishmentId));
 
     return estAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const _DetailLoadingScreen(),
       error: (err, _) => Scaffold(
         appBar: AppBar(),
         body: Center(child: Text('${t.loadError}: $err')),
@@ -69,18 +70,29 @@ class _DetailView extends ConsumerWidget {
       orElse: () => null,
     );
 
+    Future<void> openInGoogleMaps() async {
+      final Uri uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${establishment.coordinates.lat},${establishment.coordinates.lng}',
+      );
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: <Widget>[
           SliverToBoxAdapter(child: _Gallery(images: images)),
           SliverToBoxAdapter(
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.fromLTRB(
                 kScreenPaddingHorizontal,
-                18,
+                10,
                 kScreenPaddingHorizontal,
                 0,
+              ),
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +155,7 @@ class _DetailView extends ConsumerWidget {
                       t: t,
                       lang: lang,
                     ),
-                    loading: () => const SizedBox.shrink(),
+                    loading: () => const _CategoryDetailsSkeleton(),
                     error: (err, _) => const SizedBox.shrink(),
                   ),
                   // Services
@@ -163,7 +175,7 @@ class _DetailView extends ConsumerWidget {
                               ))
                           .toList(growable: false),
                     ),
-                    loading: () => const _MiniLoader(),
+                    loading: () => const _ServicesSectionSkeleton(),
                     error: (err, _) => const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 12),
@@ -174,7 +186,32 @@ class _DetailView extends ConsumerWidget {
                     style: const TextStyle(fontSize: 13, color: Color(0xFF525252)),
                   ),
                   const SizedBox(height: 12),
-                  LocationMap(coordinates: establishment.coordinates),
+                  Stack(
+                    children: <Widget>[
+                      LocationMap(coordinates: establishment.coordinates),
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: FilledButton.icon(
+                          onPressed: openInGoogleMaps,
+                          icon: const Icon(Icons.open_in_new, size: 14),
+                          label: Text(
+                            t.openInGoogleMaps,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.textPrimary,
+                            side: const BorderSide(color: Color(0xFFE5E5E5)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
                   // Reviews
                   _ReviewsPreview(
@@ -208,8 +245,28 @@ class _Gallery extends StatefulWidget {
 }
 
 class _GalleryState extends State<_Gallery> {
-  final PageController _controller = PageController();
+  late final PageController _controller;
   int _index = 0;
+  late int _pageIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageIndex = _hasLoop ? 1 : 0;
+    _controller = PageController(initialPage: _pageIndex);
+  }
+
+  @override
+  void didUpdateWidget(covariant _Gallery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.images.length != widget.images.length) {
+      _pageIndex = _hasLoop ? 1 : 0;
+      _index = 0;
+      if (_controller.hasClients) {
+        _controller.jumpToPage(_pageIndex);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -219,6 +276,9 @@ class _GalleryState extends State<_Gallery> {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> loopedImages = _hasLoop
+        ? <String>[widget.images.last, ...widget.images, widget.images.first]
+        : widget.images;
     return Stack(
       children: <Widget>[
         SizedBox(
@@ -226,9 +286,9 @@ class _GalleryState extends State<_Gallery> {
           width: double.infinity,
           child: PageView.builder(
             controller: _controller,
-            itemCount: widget.images.length,
-            onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (context, i) => AppNetworkImage(url: widget.images[i]),
+            itemCount: loopedImages.length,
+            onPageChanged: _onPageChanged,
+            itemBuilder: (context, i) => AppNetworkImage(url: loopedImages[i]),
           ),
         ),
         Positioned(
@@ -241,7 +301,7 @@ class _GalleryState extends State<_Gallery> {
         ),
         if (widget.images.length > 1)
           Positioned(
-            bottom: 12,
+            bottom: 30,
             left: 0,
             right: 0,
             child: Row(
@@ -261,8 +321,56 @@ class _GalleryState extends State<_Gallery> {
               ),
             ),
           ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: Container(
+              height: 24,
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
+              ),
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  bool get _hasLoop => widget.images.length > 1;
+
+  void _onPageChanged(int page) {
+    if (!_hasLoop) {
+      if (mounted) setState(() => _index = page);
+      return;
+    }
+
+    _pageIndex = page;
+    if (page == 0) {
+      _index = widget.images.length - 1;
+      if (mounted) setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_controller.hasClients) return;
+        _pageIndex = widget.images.length;
+        _controller.jumpToPage(_pageIndex);
+      });
+      return;
+    }
+
+    if (page == widget.images.length + 1) {
+      _index = 0;
+      if (mounted) setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_controller.hasClients) return;
+        _pageIndex = 1;
+        _controller.jumpToPage(_pageIndex);
+      });
+      return;
+    }
+
+    if (mounted) setState(() => _index = page - 1);
   }
 }
 
@@ -302,13 +410,122 @@ class _Tag extends StatelessWidget {
   }
 }
 
-class _MiniLoader extends StatelessWidget {
-  const _MiniLoader();
+class _DetailLoadingScreen extends StatelessWidget {
+  const _DetailLoadingScreen();
+
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: CircularProgressIndicator()),
-      );
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverToBoxAdapter(
+            child: Stack(
+              children: <Widget>[
+                const AppSkeletonBox(height: 320, radius: 0),
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top + 8,
+                  left: 12,
+                  child: const AppSkeletonBox(width: 40, height: 40, radius: 999),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 24,
+                      decoration: const BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                kScreenPaddingHorizontal,
+                10,
+                kScreenPaddingHorizontal,
+                30,
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  AppSkeletonBox(width: 92, height: 24, radius: 999),
+                  SizedBox(height: 12),
+                  AppSkeletonBox(width: 220, height: 30),
+                  SizedBox(height: 8),
+                  AppSkeletonBox(width: 180, height: 16),
+                  SizedBox(height: 18),
+                  AppSkeletonBox(height: 14),
+                  SizedBox(height: 6),
+                  AppSkeletonBox(width: 280, height: 14),
+                  SizedBox(height: 20),
+                  AppSkeletonBox(width: 140, height: 22),
+                  SizedBox(height: 10),
+                  AppSkeletonBox(height: 150),
+                  SizedBox(height: 14),
+                  AppSkeletonBox(height: 150),
+                  SizedBox(height: 20),
+                  AppSkeletonBox(width: 120, height: 22),
+                  SizedBox(height: 10),
+                  AppSkeletonBox(height: 200),
+                  SizedBox(height: 20),
+                  AppSkeletonBox(width: 150, height: 22),
+                  SizedBox(height: 10),
+                  AppSkeletonBox(height: 120),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryDetailsSkeleton extends StatelessWidget {
+  const _CategoryDetailsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 16, bottom: 16),
+      child: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(child: AppSkeletonBox(height: 78)),
+              SizedBox(width: 12),
+              Expanded(child: AppSkeletonBox(height: 78)),
+            ],
+          ),
+          SizedBox(height: 10),
+          AppSkeletonBox(height: 64),
+        ],
+      ),
+    );
+  }
+}
+
+class _ServicesSectionSkeleton extends StatelessWidget {
+  const _ServicesSectionSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: <Widget>[
+        AppSkeletonBox(height: 132),
+        SizedBox(height: 12),
+        AppSkeletonBox(height: 132),
+      ],
+    );
+  }
 }
 
 class _ServiceTile extends StatelessWidget {
@@ -328,66 +545,93 @@ class _ServiceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(kRadius),
+        borderRadius: BorderRadius.circular(kRadiusSm),
         border: Border.all(color: const Color(0xFFEDEDED)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  service.localizedName(lang),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(kRadiusSm),
+                bottomLeft: Radius.circular(kRadiusSm),
+              ),
+              child: SizedBox(
+                width: 140,
+                child: AppNetworkImage(url: service.coverImage),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            service.localizedName(lang),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        Text(
+                          service.price > 0 ? formatMad(service.price, currency: service.currency) : t.free,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      service.localizedShortDescription(lang),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF525252), height: 1.3),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: <Widget>[
+                        if (service.durationMinutes != null) ...<Widget>[
+                          const Icon(Icons.schedule, size: 12, color: Color(0xFF737373)),
+                          const SizedBox(width: 3),
+                          Text('${service.durationMinutes} ${t.min}',
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF737373))),
+                          const SizedBox(width: 8),
+                        ],
+                        const Icon(Icons.group_outlined, size: 12, color: Color(0xFF737373)),
+                        const SizedBox(width: 3),
+                        Text('${service.minPeople}-${service.maxPeople}',
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF737373))),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: onBook,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textPrimary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                        ),
+                        child: Text(
+                          service.instantBooking ? t.bookNow : t.requestBooking,
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                service.price > 0 ? formatMad(service.price, currency: service.currency) : t.free,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            service.localizedShortDescription(lang),
-            style: const TextStyle(fontSize: 13, color: Color(0xFF525252), height: 1.35),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              if (service.durationMinutes != null) ...<Widget>[
-                const Icon(Icons.schedule, size: 14, color: Color(0xFF737373)),
-                const SizedBox(width: 4),
-                Text('${service.durationMinutes} ${t.min}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF737373))),
-                const SizedBox(width: 12),
-              ],
-              const Icon(Icons.group_outlined, size: 14, color: Color(0xFF737373)),
-              const SizedBox(width: 4),
-              Text('${service.minPeople}-${service.maxPeople}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF737373))),
-              const Spacer(),
-              FilledButton(
-                onPressed: onBook,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.textPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                ),
-                child: Text(
-                  service.instantBooking ? t.bookNow : t.requestBooking,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -765,7 +1009,13 @@ class _ReviewsPreview extends StatelessWidget {
           ],
         );
       },
-      loading: () => const _MiniLoader(),
+      loading: () => const Column(
+        children: <Widget>[
+          AppSkeletonBox(height: 98),
+          SizedBox(height: 12),
+          AppSkeletonBox(height: 98),
+        ],
+      ),
       error: (err, _) => const SizedBox.shrink(),
     );
   }

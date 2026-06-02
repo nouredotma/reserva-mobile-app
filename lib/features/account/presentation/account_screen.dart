@@ -19,59 +19,143 @@ class AccountScreen extends ConsumerWidget {
     final AppLanguage lang = ref.watch(languageProvider);
     final authState = ref.watch(authSessionProvider);
 
+    if (authState.isLoading) {
+      return AppScaffold(
+        title: t.account,
+        padding: kScreenContentPadding,
+        children: const <Widget>[
+          AppSkeletonBox(height: 108),
+          SizedBox(height: 24),
+          AppSkeletonBox(width: 90, height: 18),
+          SizedBox(height: 10),
+          Row(
+            children: <Widget>[
+              Expanded(child: AppSkeletonBox(height: 46)),
+              SizedBox(width: 12),
+              Expanded(child: AppSkeletonBox(height: 46)),
+            ],
+          ),
+          SizedBox(height: 24),
+          AppSkeletonBox(height: 52),
+          SizedBox(height: 10),
+          AppSkeletonBox(height: 52),
+        ],
+      );
+    }
+
     return AppScaffold(
       title: t.account,
       padding: kScreenContentPadding,
       children: <Widget>[
-        // Profile header
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF9F9F9),
-            borderRadius: BorderRadius.circular(kRadiusLg),
-          ),
-          child: Row(
-            children: <Widget>[
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AppColors.primary,
-                child: Icon(
-                  authState.isLoggedIn ? Icons.person : Icons.person_outline,
-                  color: AppColors.textPrimary,
-                  size: 30,
+        // Profile / guest card
+        if (authState.isLoggedIn && authState.user != null)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9F9F9),
+              borderRadius: BorderRadius.circular(kRadiusSm),
+              border: Border.all(color: const Color(0xFFEDEDED)),
+            ),
+            child: Row(
+              children: <Widget>[
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.primary,
+                  child: const Icon(
+                    Icons.person,
+                    color: AppColors.textPrimary,
+                    size: 24,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        authState.user!.fullName,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        authState.user!.email,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF737373)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9F9F9),
+              borderRadius: BorderRadius.circular(kRadiusSm),
+              border: Border.all(color: const Color(0xFFEDEDED)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
                   children: <Widget>[
-                    Text(
-                      authState.isLoggedIn && authState.user != null
-                          ? authState.user!.fullName
-                          : (lang.isFrench ? 'Invité' : 'Guest'),
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEEEEE),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline,
+                        color: Color(0xFF616161),
+                        size: 22,
+                      ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      authState.isLoggedIn && authState.user != null
-                          ? authState.user!.email
-                          : (lang.isFrench
-                              ? 'Connectez-vous pour gérer vos réservations'
-                              : 'Log in to manage your bookings'),
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF737373)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            lang.isFrench ? 'Invité' : 'Guest',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            lang.isFrench
+                                ? 'Connectez-vous pour gérer vos réservations'
+                                : 'Log in to manage your bookings',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF737373), height: 1.25),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              if (!authState.isLoggedIn)
-                TextButton(
-                  onPressed: () => context.push(AppRoute.login),
-                  child: Text(t.logIn),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => context.push(AppRoute.login),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.textPrimary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    child: Text(
+                      t.logIn,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
         const SizedBox(height: 24),
 
         // Language switcher
@@ -115,10 +199,20 @@ class AccountScreen extends ConsumerWidget {
           OutlinedButton(
             onPressed: () => ref.read(authSessionProvider.notifier).logout(),
             style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFF1F2),
+              foregroundColor: const Color(0xFFB91C1C),
+              side: const BorderSide(color: Color(0xFFFCA5A5)),
               minimumSize: const Size.fromHeight(52),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
             ),
-            child: Text(t.logOut),
+            child: Text(
+              t.logOut,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFB91C1C),
+              ),
+            ),
           ),
         ],
       ],
@@ -137,11 +231,11 @@ class _LangButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? AppColors.textPrimary : const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(kRadius),
+          borderRadius: BorderRadius.circular(kRadiusSm),
           border: Border.all(
             color: selected ? AppColors.textPrimary : const Color(0xFFE5E5E5),
           ),
@@ -171,10 +265,10 @@ class _MenuTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(kRadius),
+          borderRadius: BorderRadius.circular(kRadiusSm),
           border: Border.all(color: const Color(0xFFEDEDED)),
         ),
         child: Row(

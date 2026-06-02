@@ -54,7 +54,18 @@ class BookingsScreen extends ConsumerWidget {
     return bookingsAsync.when(
       loading: () => AppScaffold(
         title: t.myBookings,
-        body: const Center(child: CircularProgressIndicator()),
+        padding: kScreenContentPadding,
+        children: const <Widget>[
+          AppSkeletonBox(width: 110, height: 20),
+          SizedBox(height: 10),
+          AppSkeletonBox(height: 114),
+          SizedBox(height: 12),
+          AppSkeletonBox(height: 114),
+          SizedBox(height: 18),
+          AppSkeletonBox(width: 90, height: 20),
+          SizedBox(height: 10),
+          AppSkeletonBox(height: 114),
+        ],
       ),
       error: (err, _) => AppScaffold(
         title: t.myBookings,
@@ -134,22 +145,26 @@ class _BookingCard extends StatelessWidget {
       onTap: () => context.push(AppRoute.detail(booking.establishmentId)),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(kRadiusLg),
+          borderRadius: BorderRadius.circular(kRadiusSm),
           border: Border.all(color: const Color(0xFFEDEDED)),
         ),
-        clipBehavior: Clip.antiAlias,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            SizedBox(
-              width: 96,
-              height: 110,
-              child: AppNetworkImage(url: booking.coverImage),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(kRadiusSm),
+              child: SizedBox(
+                width: 92,
+                height: 92,
+                child: AppNetworkImage(url: booking.coverImage),
+              ),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.only(left: 10, top: 2, right: 2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -160,39 +175,39 @@ class _BookingCard extends StatelessWidget {
                             booking.localizedEstablishmentName(lang),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
                             color: _statusColor().withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             _statusLabel(),
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _statusColor()),
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _statusColor()),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       booking.localizedServiceName(lang),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF525252)),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF525252)),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: <Widget>[
-                        const Icon(Icons.event, size: 14, color: Color(0xFF737373)),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.event, size: 12, color: Color(0xFF737373)),
+                        const SizedBox(width: 3),
                         Text('$date · ${booking.startTime}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF737373))),
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF737373))),
                         const Spacer(),
                         Text(formatMad(booking.totalPriceMad),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   ],

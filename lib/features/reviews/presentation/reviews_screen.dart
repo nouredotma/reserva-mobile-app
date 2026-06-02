@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:reservamobile/app/router/app_router.dart';
 import 'package:reservamobile/app/theme/app_colors.dart';
+import 'package:reservamobile/core/auth/auth_session_controller.dart';
 import 'package:reservamobile/core/i18n/app_language.dart';
 import 'package:reservamobile/core/i18n/app_strings.dart';
 import 'package:reservamobile/core/models/app_models.dart';
@@ -30,7 +33,8 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
     super.dispose();
   }
 
-  Future<void> _submit(AppStrings t) async {
+  Future<void> _submit(AppStrings t, {required bool canSubmitReview}) async {
+    if (!canSubmitReview) return;
     if (_contentController.text.trim().isEmpty) return;
     setState(() => _submitting = true);
     await ref.read(reservaRepositoryProvider).addReview(
@@ -52,7 +56,20 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
   Widget build(BuildContext context) {
     final AppStrings t = ref.watch(stringsProvider);
     final AppLanguage lang = ref.watch(languageProvider);
+    final authState = ref.watch(authSessionProvider);
+    final bookingsAsync = ref.watch(userBookingsProvider);
     final reviewsAsync = ref.watch(reviewsProvider(widget.establishmentId));
+    final bool isLoggedIn = authState.isLoggedIn;
+    final bool hasCompletedOrConfirmedBooking = bookingsAsync.maybeWhen(
+      data: (bookings) => bookings.any(
+        (booking) =>
+            booking.establishmentId == widget.establishmentId &&
+            booking.status != BookingStatus.cancelled &&
+            booking.status != BookingStatus.pending,
+      ),
+      orElse: () => false,
+    );
+    final bool canSubmitReview = isLoggedIn && hasCompletedOrConfirmedBooking;
 
     return AppScaffold(
       title: t.customerReviews,
@@ -63,61 +80,110 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
         40,
       ),
       children: <Widget>[
-        // Rating selector
-        Row(
-          children: List<Widget>.generate(5, (i) {
-            final value = i + 1;
-            return GestureDetector(
-              onTap: () => setState(() => _rating = value.toDouble()),
-              child: Icon(
-                value <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
-                color: AppColors.primary,
-                size: 34,
+        if (canSubmitReview) ...<Widget>[
+          // Rating selector
+          Row(
+            children: List<Widget>.generate(5, (i) {
+              final value = i + 1;
+              return GestureDetector(
+                onTap: () => setState(() => _rating = value.toDouble()),
+                child: Icon(
+                  value <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                  color: AppColors.primary,
+                  size: 34,
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _titleController,
+            decoration: InputDecoration(
+              hintText: lang.isFrench ? 'Titre' : 'Title',
+              filled: true,
+              fillColor: const Color(0xFFF5F5F5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(kRadius),
+                borderSide: BorderSide.none,
               ),
-            );
-          }),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _titleController,
-          decoration: InputDecoration(
-            hintText: lang.isFrench ? 'Titre' : 'Title',
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(kRadius),
-              borderSide: BorderSide.none,
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _contentController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: lang.isFrench ? 'Partagez votre expérience' : 'Share your experience',
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(kRadius),
-              borderSide: BorderSide.none,
+          const SizedBox(height: 10),
+          TextField(
+            controller: _contentController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: lang.isFrench ? 'Partagez votre expérience' : 'Share your experience',
+              filled: true,
+              fillColor: const Color(0xFFF5F5F5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(kRadius),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        FilledButton(
-          onPressed: _submitting ? null : () => _submit(t),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textPrimary,
-            minimumSize: const Size.fromHeight(50),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: _submitting ? null : () => _submit(t, canSubmitReview: canSubmitReview),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textPrimary,
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+            ),
+            child: Text(lang.isFrench ? 'Envoyer' : 'Submit'),
           ),
-          child: Text(lang.isFrench ? 'Envoyer' : 'Submit'),
-        ),
+        ] else ...<Widget>[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9F9F9),
+              borderRadius: BorderRadius.circular(kRadiusSm),
+              border: Border.all(color: const Color(0xFFEDEDED)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  lang.isFrench
+                      ? 'Vous devez être connecté et avoir une réservation confirmée pour laisser un avis.'
+                      : 'You must be logged in and have a confirmed booking to leave a review.',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF525252),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (!isLoggedIn)
+                  FilledButton(
+                    onPressed: () => context.push(AppRoute.login),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.textPrimary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    child: Text(lang.isFrench ? 'Se connecter' : 'Log in'),
+                  ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         reviewsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Column(
+            children: <Widget>[
+              AppSkeletonBox(height: 92),
+              SizedBox(height: 12),
+              AppSkeletonBox(height: 92),
+              SizedBox(height: 12),
+              AppSkeletonBox(height: 92),
+            ],
+          ),
           error: (err, _) => Text('${t.loadError}: $err'),
           data: (reviews) {
             if (reviews.isEmpty) {

@@ -14,6 +14,7 @@ class AppStrings {
     required this.homeCitiesTitle,
     required this.homeCitiesSubtitle,
     required this.homeFeaturedTitle,
+    required this.homeHeroTagline,
     required this.homeSearchHint,
     required this.seeAll,
     required this.listings,
@@ -125,6 +126,7 @@ class AppStrings {
   final String homeCitiesTitle;
   final String homeCitiesSubtitle;
   final String homeFeaturedTitle;
+  final String homeHeroTagline;
   final String homeSearchHint;
   final String seeAll;
   final String listings;
@@ -235,6 +237,7 @@ class AppStrings {
     homeCitiesTitle: 'Top destinations',
     homeCitiesSubtitle: 'Discover the best of Morocco',
     homeFeaturedTitle: 'Trending Destinations',
+    homeHeroTagline: 'Reserva - One App, Endless Experiences',
     homeSearchHint: 'Search experiences, places...',
     seeAll: 'See all',
     listings: 'listings',
@@ -341,6 +344,7 @@ class AppStrings {
     homeCitiesTitle: 'Destinations phares',
     homeCitiesSubtitle: 'Découvrez le meilleur du Maroc',
     homeFeaturedTitle: 'Destinations Tendances',
+    homeHeroTagline: 'Reserva - Une App, Experiences Sans Fin',
     homeSearchHint: 'Rechercher expériences, lieux...',
     seeAll: 'Voir tout',
     listings: 'établissements',
