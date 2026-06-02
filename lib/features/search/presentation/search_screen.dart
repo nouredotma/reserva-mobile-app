@@ -6,7 +6,6 @@ import 'package:reservamobile/app/theme/app_colors.dart';
 import 'package:reservamobile/core/data/cuisines.dart';
 import 'package:reservamobile/core/i18n/app_language.dart';
 import 'package:reservamobile/core/i18n/app_strings.dart';
-import 'package:reservamobile/core/i18n/labels.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
 import 'package:reservamobile/core/repositories/reserva_repository.dart';
@@ -22,10 +21,6 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  int _adults = 0;
-  int _children = 0;
 
   @override
   void dispose() {
@@ -38,8 +33,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final AppStrings t = ref.watch(stringsProvider);
     final AppLanguage lang = ref.watch(languageProvider);
     final filters = ref.watch(searchFiltersProvider);
+    final typesAsync = filters.category == null
+        ? const AsyncValue<List<Subcategory>>.data(<Subcategory>[])
+        : ref.watch(subcategoriesProvider(filters.category!));
     final citiesAsync = ref.watch(citiesProvider);
-    final categoriesAsync = ref.watch(categoriesProvider);
     final resultsAsync = ref.watch(searchedEstablishmentsProvider);
     final notifier = ref.read(searchFiltersProvider.notifier);
     final String cityLabel = citiesAsync.maybeWhen(
@@ -52,13 +49,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       },
       orElse: () => t.allCities,
     );
-    final String dateLabel = _selectedDate == null
+    final String dateLabel = filters.date == null
         ? t.date
-        : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}';
-    final String timeLabel = _selectedTime == null
-        ? t.time
-        : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
-    final int totalGuests = _adults + _children;
+        : '${filters.date!.day.toString().padLeft(2, '0')}/${filters.date!.month.toString().padLeft(2, '0')}';
+    final String timeLabel = filters.time ?? t.time;
+    final int totalGuests = filters.adults + filters.children;
     final String guestsLabel = totalGuests == 0
         ? t.guests
         : '$totalGuests ${t.guests}';
@@ -99,47 +94,45 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               _TopFilterButton(
                 icon: Icons.calendar_today_outlined,
                 label: dateLabel,
-                onTap: _pickDate,
+                onTap: () => _pickDate(notifier),
               ),
               const SizedBox(width: 8),
               _TopFilterButton(
                 icon: Icons.schedule_outlined,
                 label: timeLabel,
-                onTap: _pickTime,
+                onTap: () => _pickTime(notifier, filters.time),
               ),
               const SizedBox(width: 8),
               _TopFilterButton(
                 icon: Icons.group_outlined,
                 label: guestsLabel,
-                onTap: () => _openGuestsSheet(t),
+                onTap: () => _openGuestsSheet(t, notifier, filters.adults, filters.children),
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        // Category pills
-        categoriesAsync.when(
-          data: (categories) => _PillRow(
-            children: <Widget>[
-              FilterPill(
-                label: t.allCategories,
-                selected: filters.category == null,
-                onTap: () => notifier.setCategory(null),
-              ),
-              ...categories.map((c) => FilterPill(
-                    label: c.localizedLabel(lang),
-                    icon: categoryIcon(c.key),
-                    selected: filters.category == c.key,
-                    onTap: () => notifier.setCategory(
-                      filters.category == c.key ? null : c.key,
-                    ),
-                  )),
-            ],
+        if (filters.category != null) ...<Widget>[
+          const SizedBox(height: 2),
+          // Types pills (shown only when category is selected)
+          typesAsync.when(
+            data: (types) => _PillRow(
+              children: <Widget>[
+                ...types.map(
+                  (s) => FilterPill(
+                    label: s.localizedLabel(lang),
+                    selected: filters.subcategories.contains(s.key),
+                    onTap: () => notifier.toggleSubcategory(s.key),
+                  ),
+                ),
+              ],
+            ),
+            loading: () => const _FilterPillsSkeleton(),
+            error: (err, _) => const SizedBox.shrink(),
           ),
-          loading: () => const _FilterPillsSkeleton(),
-          error: (err, _) => const SizedBox.shrink(),
-        ),
-        const SizedBox(height: 18),
+          const SizedBox(height: 14),
+        ] else
+          const SizedBox(height: 10),
         resultsAsync.when(
           data: (results) {
             if (results.isEmpty) {
@@ -193,9 +186,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Future<void> _pickDate() async {
+  Future<void> _pickDate(SearchFiltersNotifier notifier) async {
     final DateTime now = DateTime.now();
-    final DateTime initial = _selectedDate ?? now;
+    final DateTime initial = ref.read(searchFiltersProvider).date ?? now;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -223,14 +216,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         );
       },
     );
-    if (picked != null && mounted) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null && mounted) notifier.setDate(picked);
   }
 
-  Future<void> _pickTime() async {
-    int hour = _selectedTime?.hour ?? TimeOfDay.now().hour;
-    int minute = _selectedTime?.minute ?? TimeOfDay.now().minute;
+  Future<void> _pickTime(SearchFiltersNotifier notifier, String? currentTime) async {
+    int hour = TimeOfDay.now().hour;
+    int minute = TimeOfDay.now().minute;
+    if (currentTime != null && currentTime.contains(':')) {
+      final parts = currentTime.split(':');
+      if (parts.length == 2) {
+        hour = int.tryParse(parts[0]) ?? hour;
+        minute = int.tryParse(parts[1]) ?? minute;
+      }
+    }
 
     await showModalBottomSheet<void>(
       context: context,
@@ -289,7 +287,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         Expanded(
                           child: FilledButton(
                             onPressed: () {
-                              setState(() => _selectedTime = null);
+                              notifier.setTime(null);
                               Navigator.of(context).pop();
                             },
                             style: FilledButton.styleFrom(
@@ -306,7 +304,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         Expanded(
                           child: FilledButton(
                             onPressed: () {
-                              setState(() => _selectedTime = TimeOfDay(hour: hour, minute: minute));
+                              notifier.setTime(
+                                '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
+                              );
                               Navigator.of(context).pop();
                             },
                             style: FilledButton.styleFrom(
@@ -331,7 +331,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Future<void> _openGuestsSheet(AppStrings t) async {
+  Future<void> _openGuestsSheet(
+    AppStrings t,
+    SearchFiltersNotifier notifier,
+    int currentAdults,
+    int currentChildren,
+  ) async {
+    int draftAdults = currentAdults;
+    int draftChildren = currentChildren;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.background,
@@ -362,24 +369,30 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     _GuestCounterRow(
                       label: 'Adults',
                       subtitle: '13+',
-                      count: _adults,
-                      onMinus: () => setSheetState(() => _adults = (_adults - 1).clamp(0, 99)),
-                      onPlus: () => setSheetState(() => _adults = (_adults + 1).clamp(0, 99)),
+                      count: draftAdults,
+                      onMinus: () =>
+                          setSheetState(() => draftAdults = (draftAdults - 1).clamp(0, 99)),
+                      onPlus: () =>
+                          setSheetState(() => draftAdults = (draftAdults + 1).clamp(0, 99)),
                     ),
                     const SizedBox(height: 12),
                     _GuestCounterRow(
                       label: 'Children',
                       subtitle: '2-12',
-                      count: _children,
-                      onMinus: () => setSheetState(() => _children = (_children - 1).clamp(0, 99)),
-                      onPlus: () => setSheetState(() => _children = (_children + 1).clamp(0, 99)),
+                      count: draftChildren,
+                      onMinus: () => setSheetState(
+                        () => draftChildren = (draftChildren - 1).clamp(0, 99),
+                      ),
+                      onPlus: () => setSheetState(
+                        () => draftChildren = (draftChildren + 1).clamp(0, 99),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: () {
-                          setState(() {});
+                          notifier.setGuests(adults: draftAdults, children: draftChildren);
                           Navigator.of(context).pop();
                         },
                         style: FilledButton.styleFrom(
@@ -476,25 +489,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
-class _PillRow extends StatelessWidget {
-  const _PillRow({required this.children});
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.zero,
-        itemCount: children.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) => children[index],
-      ),
-    );
-  }
-}
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.t, required this.onClear});
   final AppStrings t;
@@ -519,6 +513,25 @@ class _EmptyState extends StatelessWidget {
             TextButton(onPressed: onClear, child: Text(t.clearFilters)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PillRow extends StatelessWidget {
+  const _PillRow({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: children.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) => children[index],
       ),
     );
   }
@@ -559,6 +572,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final t = widget.t;
     final lang = widget.lang;
     final filters = ref.watch(searchFiltersProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
     final notifier = ref.read(searchFiltersProvider.notifier);
 
     if (_searchController.text != filters.query) {
@@ -651,33 +665,31 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Subcategory (depends on selected category)
-            if (filters.category != null) ...<Widget>[
-              _GroupLabel(label: t.allTypes),
-              ref.watch(subcategoriesProvider(filters.category!)).when(
-                    data: (subs) => Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        _SelectChip(
-                          label: t.allTypes,
-                          selected: filters.subcategory == null,
-                          onTap: () => notifier.setSubcategory(null),
-                        ),
-                        ...subs.map((s) => _SelectChip(
-                              label: s.localizedLabel(lang),
-                              selected: filters.subcategory == s.key,
-                              onTap: () => notifier.setSubcategory(
-                                filters.subcategory == s.key ? null : s.key,
-                              ),
-                            )),
-                      ],
-                    ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (err, _) => const SizedBox.shrink(),
+            // Category (single-select; required to enable Types row)
+            _GroupLabel(label: t.category),
+            categoriesAsync.when(
+              data: (categories) => Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _SelectChip(
+                    label: t.allCategories,
+                    selected: filters.category == null,
+                    onTap: () => notifier.setCategory(null),
                   ),
-              const SizedBox(height: 20),
-            ],
+                  ...categories.map((c) => _SelectChip(
+                        label: c.localizedLabel(lang),
+                        selected: filters.category == c.key,
+                        onTap: () => notifier.setCategory(
+                          filters.category == c.key ? null : c.key,
+                        ),
+                      )),
+                ],
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (err, _) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 20),
 
             // Cuisine (restaurants only)
             if (filters.category == EstablishmentCategory.restaurants) ...<Widget>[
@@ -688,16 +700,14 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 children: <Widget>[
                   _SelectChip(
                     label: t.allCuisines,
-                    selected: filters.cuisine == null,
-                    onTap: () => notifier.setCuisine(null),
+                    selected: filters.cuisines.isEmpty,
+                    onTap: () => notifier.setCuisines(const <String>[]),
                   ),
                   ...const <String>['moroccan', 'mediterranean', 'french', 'italian', 'japanese', 'seafood', 'fusion']
                       .map((key) => _SelectChip(
                             label: cuisineLabel(key, lang),
-                            selected: filters.cuisine == key,
-                            onTap: () => notifier.setCuisine(
-                              filters.cuisine == key ? null : key,
-                            ),
+                            selected: filters.cuisines.contains(key),
+                            onTap: () => notifier.toggleCuisine(key),
                           )),
                 ],
               ),

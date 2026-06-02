@@ -14,19 +14,36 @@ import 'package:reservamobile/core/widgets/ui_kit.dart';
 import 'package:reservamobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:reservamobile/features/shell/shell_providers.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
-  void _openSearch(WidgetRef ref, {EstablishmentCategory? category, String? cityId}) {
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  int _adults = 0;
+  int _children = 0;
+  EstablishmentCategory? _selectedCategory = EstablishmentCategory.restaurants;
+  String? _selectedCityId;
+
+  void _openSearch({EstablishmentCategory? category, String? cityId}) {
     final notifier = ref.read(searchFiltersProvider.notifier);
     notifier.clear();
     if (category != null) notifier.setCategory(category);
     if (cityId != null) notifier.setCity(cityId);
+    notifier.setDate(_selectedDate);
+    notifier.setTime(_selectedTime == null
+        ? null
+        : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}');
+    notifier.setGuests(adults: _adults, children: _children);
     ref.read(shellTabProvider.notifier).state = 1;
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppStrings t = ref.watch(stringsProvider);
     final AppLanguage lang = ref.watch(languageProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
@@ -34,9 +51,11 @@ class HomeScreen extends ConsumerWidget {
     final featuredAsync = ref.watch(featuredEstablishmentsProvider);
 
     final Size screenSize = MediaQuery.sizeOf(context);
-    final double heroHeight = screenSize.height * 0.40;
-    final double overlap = 28;
-    final double contentTopOffset = (heroHeight - kToolbarHeight - overlap).clamp(0.0, heroHeight);
+    final bool isShortDevice = screenSize.height < 760;
+    final double heroHeight = screenSize.height * 0.60;
+    final double contentTopOffset =
+        (heroHeight - kToolbarHeight - (isShortDevice ? 20 : 8)).clamp(0.0, heroHeight);
+    final double mainContentLift = isShortDevice ? -8 : -14;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -127,41 +146,87 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                   SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: contentTopOffset,
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Text(
-                            t.homeHeroTagline,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              letterSpacing: -0.4,
-                            ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: contentTopOffset),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: Align(
+                          alignment: const Alignment(0, -0.18),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  t.homeHeroTagline,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.2,
+                                    letterSpacing: -0.4,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _HeroMobileFilter(
+                                categoriesAsync: categoriesAsync,
+                                citiesAsync: citiesAsync,
+                                language: lang,
+                                strings: t,
+                                selectedDate: _selectedDate,
+                                selectedTime: _selectedTime,
+                                adults: _adults,
+                                children: _children,
+                                selectedCategory: _selectedCategory,
+                                selectedCityId: _selectedCityId,
+                                onCategoryChanged: (value) {
+                                  setState(() => _selectedCategory = value);
+                                },
+                                onCityChanged: (value) {
+                                  setState(() => _selectedCityId = value);
+                                },
+                                onDateChanged: (value) {
+                                  setState(() => _selectedDate = value);
+                                },
+                                onTimeChanged: (value) {
+                                  setState(() => _selectedTime = value);
+                                },
+                                onGuestsChanged: (adults, children) {
+                                  setState(() {
+                                    _adults = adults;
+                                    _children = children;
+                                  });
+                                },
+                                onSearchTap: () => _openSearch(
+                                  category: _selectedCategory,
+                                  cityId: _selectedCityId,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 120),
-                      decoration: const BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
-                      ),
-                      child: Column(
+                    child: Transform.translate(
+                      offset: Offset(0, mainContentLift),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(12, 20, 12, 120),
+                        decoration: const BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
+                        ),
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
                           categoriesAsync.when(
                             data: (categories) => _CategoriesGrid(
                               categories: categories,
                               language: lang,
-                              onTap: (c) => _openSearch(ref, category: c.key),
+                              onTap: (c) => _openSearch(category: c.key),
                             ),
                             loading: () => const _CategoriesGridSkeleton(),
                             error: (err, _) => Text('${t.loadError}: $err'),
@@ -179,7 +244,7 @@ class HomeScreen extends ConsumerWidget {
                                     (city) => _CityCard(
                                       city: city,
                                       language: lang,
-                                      onTap: () => _openSearch(ref, cityId: city.id),
+                                      onTap: () => _openSearch(cityId: city.id),
                                     ),
                                   )
                                   .toList(growable: false),
@@ -214,12 +279,694 @@ class HomeScreen extends ConsumerWidget {
                             error: (err, _) => Text('${t.loadError}: $err'),
                           ),
                         ],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroMobileFilter extends StatelessWidget {
+  const _HeroMobileFilter({
+    required this.categoriesAsync,
+    required this.citiesAsync,
+    required this.language,
+    required this.strings,
+    required this.selectedDate,
+    required this.selectedTime,
+    required this.adults,
+    required this.children,
+    required this.selectedCategory,
+    required this.selectedCityId,
+    required this.onCategoryChanged,
+    required this.onCityChanged,
+    required this.onDateChanged,
+    required this.onTimeChanged,
+    required this.onGuestsChanged,
+    required this.onSearchTap,
+  });
+
+  final AsyncValue<List<Category>> categoriesAsync;
+  final AsyncValue<List<City>> citiesAsync;
+  final AppLanguage language;
+  final AppStrings strings;
+  final DateTime? selectedDate;
+  final TimeOfDay? selectedTime;
+  final int adults;
+  final int children;
+  final EstablishmentCategory? selectedCategory;
+  final String? selectedCityId;
+  final ValueChanged<EstablishmentCategory> onCategoryChanged;
+  final ValueChanged<String?> onCityChanged;
+  final ValueChanged<DateTime?> onDateChanged;
+  final ValueChanged<TimeOfDay?> onTimeChanged;
+  final void Function(int adults, int children) onGuestsChanged;
+  final VoidCallback onSearchTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final int totalGuests = adults + children;
+    final EstablishmentCategory effectiveCategory =
+        selectedCategory ?? EstablishmentCategory.restaurants;
+    final bool showTime = effectiveCategory != EstablishmentCategory.voyage &&
+        effectiveCategory != EstablishmentCategory.spectacles;
+    final String dateLabel = selectedDate == null
+        ? strings.date
+        : '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}';
+    final String timeLabel = selectedTime == null
+        ? strings.time
+        : '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}';
+    final String guestsLabel = totalGuests == 0 ? strings.guests : '$totalGuests ${strings.guests}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        categoriesAsync.when(
+          data: (categories) => _HeroCategoryGrid(
+            categories: categories,
+            language: language,
+            selectedCategory: selectedCategory,
+            onTap: onCategoryChanged,
+          ),
+          loading: () => const _HeroCategorySkeleton(),
+          error: (_, _) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(kRadiusLg),
+            border: Border.all(color: const Color(0xFFE5E5E5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _HeroFilterButton(
+                icon: Icons.location_on_outlined,
+                label: _resolveCityLabel(citiesAsync, selectedCityId),
+                onTap: () => _openCityPicker(context),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _HeroFilterButton(
+                      icon: Icons.calendar_today_outlined,
+                      label: dateLabel,
+                      onTap: () => _pickDate(context),
+                    ),
+                  ),
+                  if (showTime) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _HeroFilterButton(
+                        icon: Icons.schedule_outlined,
+                        label: timeLabel,
+                        onTap: () => _pickTime(context),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 6),
+              _HeroFilterButton(
+                icon: Icons.group_outlined,
+                label: guestsLabel,
+                onTap: () => _openGuestsSheet(context),
+              ),
+              const SizedBox(height: 6),
+              FilledButton.icon(
+                onPressed: onSearchTap,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textPrimary,
+                  minimumSize: const Size.fromHeight(46),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                ),
+                icon: const Icon(Icons.search, size: 18),
+                label: Text(strings.searchTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _resolveCityLabel(AsyncValue<List<City>> citiesAsync, String? cityId) {
+    if (cityId == null) return strings.allCities;
+    final cities = citiesAsync.valueOrNull;
+    if (cities == null) return strings.allCities;
+    for (final city in cities) {
+      if (city.id == cityId) return city.localizedName(language);
+    }
+    return strings.allCities;
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final DateTime now = DateTime.now();
+    final DateTime initial = selectedDate ?? now;
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 2),
+    );
+    if (picked != null) onDateChanged(picked);
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    int hour = selectedTime?.hour ?? TimeOfDay.now().hour;
+    int minute = selectedTime?.minute ?? TimeOfDay.now().minute;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusMd)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E5E5),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Select time',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        _TimeUnitPicker(
+                          value: hour.toString().padLeft(2, '0'),
+                          label: 'H',
+                          onMinus: () => setSheetState(() => hour = (hour - 1 + 24) % 24),
+                          onPlus: () => setSheetState(() => hour = (hour + 1) % 24),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(':', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                        ),
+                        _TimeUnitPicker(
+                          value: minute.toString().padLeft(2, '0'),
+                          label: 'M',
+                          onMinus: () => setSheetState(() => minute = (minute - 5 + 60) % 60),
+                          onPlus: () => setSheetState(() => minute = (minute + 5) % 60),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () {
+                              onTimeChanged(null);
+                              Navigator.of(context).pop();
+                            },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.textPrimary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                            child: const Text('Clear'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () {
+                              onTimeChanged(TimeOfDay(hour: hour, minute: minute));
+                              Navigator.of(context).pop();
+                            },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.textPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                            child: const Text('Apply'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openGuestsSheet(BuildContext context) async {
+    int draftAdults = adults;
+    int draftChildren = children;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusMd)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E5E5),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(strings.guests, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 18),
+                    _GuestCounterRow(
+                      label: 'Adults',
+                      subtitle: '13+',
+                      count: draftAdults,
+                      onMinus: () => setSheetState(() => draftAdults = (draftAdults - 1).clamp(0, 99)),
+                      onPlus: () => setSheetState(() => draftAdults = (draftAdults + 1).clamp(0, 99)),
+                    ),
+                    const SizedBox(height: 12),
+                    _GuestCounterRow(
+                      label: 'Children',
+                      subtitle: '2-12',
+                      count: draftChildren,
+                      onMinus: () => setSheetState(() => draftChildren = (draftChildren - 1).clamp(0, 99)),
+                      onPlus: () => setSheetState(() => draftChildren = (draftChildren + 1).clamp(0, 99)),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          onGuestsChanged(draftAdults, draftChildren);
+                          Navigator.of(context).pop();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                        ),
+                        child: Text(strings.apply),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openCityPicker(BuildContext context) async {
+    final List<City>? cities = citiesAsync.valueOrNull;
+    if (cities == null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusMd)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5E5E5),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  strings.allCities,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 320),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: <Widget>[
+                      _CityOptionTile(
+                        label: strings.allCities,
+                        selected: selectedCityId == null,
+                        onTap: () {
+                          onCityChanged(null);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      ...cities.map(
+                        (city) => _CityOptionTile(
+                          label: city.localizedName(language),
+                          selected: selectedCityId == city.id,
+                          onTap: () {
+                            onCityChanged(city.id);
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HeroCategoryGrid extends StatelessWidget {
+  const _HeroCategoryGrid({
+    required this.categories,
+    required this.language,
+    required this.selectedCategory,
+    required this.onTap,
+  });
+
+  final List<Category> categories;
+  final AppLanguage language;
+  final EstablishmentCategory? selectedCategory;
+  final ValueChanged<EstablishmentCategory> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double spacing = 3;
+        final double itemWidth = (constraints.maxWidth - (spacing * 3)) / 4;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: categories.map((category) {
+            final bool selected = selectedCategory == category.key;
+            final String rawLabel = category.localizedLabel(language).trim();
+            final Set<EstablishmentCategory> forceTwoLines = <EstablishmentCategory>{
+              EstablishmentCategory.wellness,
+              EstablishmentCategory.conciergerie,
+              EstablishmentCategory.corporate,
+              EstablishmentCategory.spectacles,
+            };
+            final String displayLabel = forceTwoLines.contains(category.key)
+                ? rawLabel.replaceAll(' & ', '\n& ')
+                : rawLabel;
+
+            return SizedBox(
+              width: itemWidth,
+              height: 34,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => onTap(category.key),
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.textPrimary : Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: selected ? AppColors.textPrimary : const Color(0xFFE5E5E5),
+                    ),
+                  ),
+                  child: Text(
+                    displayLabel,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      height: 1.0,
+                      color: selected ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(growable: false),
+        );
+      },
+    );
+  }
+}
+
+class _HeroFilterButton extends StatelessWidget {
+  const _HeroFilterButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: const Color(0xFFE5E5E5)),
+        ),
+        child: Row(
+          children: <Widget>[
+            Icon(icon, size: 16, color: const Color(0xFF737373)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroCategorySkeleton extends StatelessWidget {
+  const _HeroCategorySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double spacing = 3;
+        final double itemWidth = (constraints.maxWidth - (spacing * 3)) / 4;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: List<Widget>.generate(
+            8,
+            (_) => SizedBox(
+              width: itemWidth,
+              height: 34,
+              child: const AppSkeletonBox(height: double.infinity),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TimeUnitPicker extends StatelessWidget {
+  const _TimeUnitPicker({
+    required this.value,
+    required this.label,
+    required this.onMinus,
+    required this.onPlus,
+  });
+
+  final String value;
+  final String label;
+  final VoidCallback onMinus;
+  final VoidCallback onPlus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        InkWell(
+          onTap: onPlus,
+          borderRadius: BorderRadius.circular(8),
+          child: const Padding(
+            padding: EdgeInsets.all(2),
+            child: Icon(Icons.keyboard_arrow_up_rounded, size: 18),
+          ),
+        ),
+        Container(
+          width: 44,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(kRadiusSm),
+            border: Border.all(color: const Color(0xFFE5E5E5)),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+        ),
+        InkWell(
+          onTap: onMinus,
+          borderRadius: BorderRadius.circular(8),
+          child: const Padding(
+            padding: EdgeInsets.all(2),
+            child: Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 9, color: Color(0xFF737373)),
+        ),
+      ],
+    );
+  }
+}
+
+class _GuestCounterRow extends StatelessWidget {
+  const _GuestCounterRow({
+    required this.label,
+    required this.subtitle,
+    required this.count,
+    required this.onMinus,
+    required this.onPlus,
+  });
+
+  final String label;
+  final String subtitle;
+  final int count;
+  final VoidCallback onMinus;
+  final VoidCallback onPlus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+              Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF737373))),
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: onMinus,
+          icon: const Icon(Icons.remove_circle_outline),
+        ),
+        Text('$count', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+        IconButton(
+          onPressed: onPlus,
+          icon: const Icon(Icons.add_circle_outline),
+        ),
+      ],
+    );
+  }
+}
+
+class _CityOptionTile extends StatelessWidget {
+  const _CityOptionTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(kRadiusSm),
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF5F5F5) : Colors.transparent,
+          borderRadius: BorderRadius.circular(kRadiusSm),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            if (selected) const Icon(Icons.check, size: 16),
           ],
         ),
       ),

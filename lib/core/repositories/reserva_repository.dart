@@ -12,8 +12,8 @@ abstract class ReservaRepository {
   Future<List<Establishment>> searchEstablishments({
     String? cityId,
     EstablishmentCategory? category,
-    String? subcategory,
-    String? cuisine,
+    List<String>? subcategories,
+    List<String>? cuisines,
     double? minRating,
     String? query,
     SortOption sort,

@@ -40,8 +40,8 @@ class MockReservaRepository implements ReservaRepository {
   Future<List<Establishment>> searchEstablishments({
     String? cityId,
     EstablishmentCategory? category,
-    String? subcategory,
-    String? cuisine,
+    List<String>? subcategories,
+    List<String>? cuisines,
     double? minRating,
     String? query,
     SortOption sort = SortOption.recommended,
@@ -50,11 +50,14 @@ class MockReservaRepository implements ReservaRepository {
     final results = _establishments.where((e) {
       final cityOk = cityId == null || cityId.isEmpty || e.cityId == cityId;
       final categoryOk = category == null || e.category == category;
-      final subOk =
-          subcategory == null || subcategory.isEmpty || e.subcategory == subcategory;
-      final cuisineOk = cuisine == null ||
-          cuisine.isEmpty ||
-          (_restaurantDetailsFor(e.id)?.cuisineType.contains(cuisine) ?? false);
+      final subOk = subcategories == null ||
+          subcategories.isEmpty ||
+          (e.subcategory != null && subcategories.contains(e.subcategory));
+      final cuisineOk = cuisines == null ||
+          cuisines.isEmpty ||
+          ((_restaurantDetailsFor(e.id)?.cuisineType
+                  .any((value) => cuisines.contains(value))) ??
+              false);
       final ratingOk = minRating == null || e.rating >= minRating;
       final queryOk = normalized == null ||
           normalized.isEmpty ||

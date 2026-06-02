@@ -30,53 +30,77 @@ class SearchFilters {
   const SearchFilters({
     this.cityId,
     this.category,
-    this.subcategory,
-    this.cuisine,
+    this.subcategories = const <String>[],
+    this.cuisines = const <String>[],
     this.minRating,
     this.query = '',
     this.sort = SortOption.recommended,
+    this.date,
+    this.time,
+    this.adults = 0,
+    this.children = 0,
   });
 
   final String? cityId;
   final EstablishmentCategory? category;
-  final String? subcategory;
-  final String? cuisine;
+  final List<String> subcategories;
+  final List<String> cuisines;
   final double? minRating;
   final String query;
   final SortOption sort;
+  final DateTime? date;
+  final String? time;
+  final int adults;
+  final int children;
 
   SearchFilters copyWith({
     String? cityId,
     EstablishmentCategory? category,
-    String? subcategory,
-    String? cuisine,
+    List<String>? subcategories,
+    List<String>? cuisines,
     double? minRating,
     String? query,
     SortOption? sort,
+    DateTime? date,
+    String? time,
+    int? adults,
+    int? children,
     bool clearCity = false,
     bool clearCategory = false,
     bool clearSubcategory = false,
     bool clearCuisine = false,
     bool clearRating = false,
+    bool clearDate = false,
+    bool clearTime = false,
   }) {
     return SearchFilters(
       cityId: clearCity ? null : (cityId ?? this.cityId),
       category: clearCategory ? null : (category ?? this.category),
-      subcategory: clearSubcategory ? null : (subcategory ?? this.subcategory),
-      cuisine: clearCuisine ? null : (cuisine ?? this.cuisine),
+      subcategories: clearSubcategory
+          ? const <String>[]
+          : (subcategories ?? this.subcategories),
+      cuisines: clearCuisine ? const <String>[] : (cuisines ?? this.cuisines),
       minRating: clearRating ? null : (minRating ?? this.minRating),
       query: query ?? this.query,
       sort: sort ?? this.sort,
+      date: clearDate ? null : (date ?? this.date),
+      time: clearTime ? null : (time ?? this.time),
+      adults: adults ?? this.adults,
+      children: children ?? this.children,
     );
   }
 
   bool get hasActiveFilters =>
       cityId != null ||
       category != null ||
-      subcategory != null ||
-      cuisine != null ||
+      subcategories.isNotEmpty ||
+      cuisines.isNotEmpty ||
       minRating != null ||
-      query.isNotEmpty;
+      query.isNotEmpty ||
+      date != null ||
+      time != null ||
+      adults > 0 ||
+      children > 0;
 }
 
 class SearchFiltersNotifier extends StateNotifier<SearchFilters> {
@@ -97,18 +121,38 @@ class SearchFiltersNotifier extends StateNotifier<SearchFilters> {
     );
   }
 
-  void setSubcategory(String? subcategory) {
+  void setSubcategories(List<String> subcategories) {
     state = state.copyWith(
-      subcategory: subcategory,
-      clearSubcategory: subcategory == null || subcategory.isEmpty,
+      subcategories: subcategories,
+      clearSubcategory: subcategories.isEmpty,
     );
   }
 
-  void setCuisine(String? cuisine) {
+  void toggleSubcategory(String key) {
+    final current = List<String>.of(state.subcategories);
+    if (current.contains(key)) {
+      current.remove(key);
+    } else {
+      current.add(key);
+    }
+    setSubcategories(current);
+  }
+
+  void setCuisines(List<String> cuisines) {
     state = state.copyWith(
-      cuisine: cuisine,
-      clearCuisine: cuisine == null || cuisine.isEmpty,
+      cuisines: cuisines,
+      clearCuisine: cuisines.isEmpty,
     );
+  }
+
+  void toggleCuisine(String key) {
+    final current = List<String>.of(state.cuisines);
+    if (current.contains(key)) {
+      current.remove(key);
+    } else {
+      current.add(key);
+    }
+    setCuisines(current);
   }
 
   void setMinRating(double? rating) {
@@ -121,6 +165,24 @@ class SearchFiltersNotifier extends StateNotifier<SearchFilters> {
 
   void setSort(SortOption sort) {
     state = state.copyWith(sort: sort);
+  }
+
+  void setDate(DateTime? date) {
+    state = state.copyWith(date: date, clearDate: date == null);
+  }
+
+  void setTime(String? time) {
+    state = state.copyWith(
+      time: time,
+      clearTime: time == null || time.isEmpty,
+    );
+  }
+
+  void setGuests({int? adults, int? children}) {
+    state = state.copyWith(
+      adults: adults ?? state.adults,
+      children: children ?? state.children,
+    );
   }
 
   void clear() {
@@ -139,8 +201,8 @@ final searchedEstablishmentsProvider =
   return ref.watch(reservaRepositoryProvider).searchEstablishments(
         cityId: filters.cityId,
         category: filters.category,
-        subcategory: filters.subcategory,
-        cuisine: filters.cuisine,
+        subcategories: filters.subcategories,
+        cuisines: filters.cuisines,
         minRating: filters.minRating,
         query: filters.query,
         sort: filters.sort,
