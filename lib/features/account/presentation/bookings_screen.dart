@@ -75,7 +75,7 @@ class BookingsScreen extends ConsumerWidget {
 
         return AppScaffold(
           title: t.myBookings,
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+          padding: kScreenContentPadding,
           children: <Widget>[
             if (upcoming.isNotEmpty) ...<Widget>[
               SectionHeader(title: t.upcoming),

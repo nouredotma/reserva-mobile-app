@@ -2,6 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:reservamobile/app/theme/app_colors.dart';
 
+/// Horizontal inset for screen content (12dp — common on mobile; Material default is 16).
+const double kScreenPaddingHorizontal = 12;
+
+/// Default padding for tab screens; bottom inset clears the floating nav bar.
+const EdgeInsets kScreenContentPadding = EdgeInsets.fromLTRB(
+  kScreenPaddingHorizontal,
+  4,
+  kScreenPaddingHorizontal,
+  120,
+);
+
 /// Screen layout with a header that scrolls away with the page content.
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -11,7 +22,7 @@ class AppScaffold extends StatelessWidget {
     this.actions,
     this.leading,
     this.automaticallyImplyLeading = true,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = kScreenContentPadding,
     this.children,
     this.body,
   }) : assert(

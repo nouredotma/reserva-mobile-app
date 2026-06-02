@@ -21,7 +21,7 @@ class AccountScreen extends ConsumerWidget {
 
     return AppScaffold(
       title: t.account,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+      padding: kScreenContentPadding,
       children: <Widget>[
         // Profile header
         Container(

@@ -56,7 +56,12 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
 
     return AppScaffold(
       title: t.customerReviews,
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+      padding: const EdgeInsets.fromLTRB(
+        kScreenPaddingHorizontal,
+        4,
+        kScreenPaddingHorizontal,
+        40,
+      ),
       children: <Widget>[
         // Rating selector
         Row(

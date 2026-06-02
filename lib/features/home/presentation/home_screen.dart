@@ -33,7 +33,7 @@ class HomeScreen extends ConsumerWidget {
     final featuredAsync = ref.watch(featuredEstablishmentsProvider);
 
     return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+      padding: kScreenContentPadding,
       titleWidget: Image.asset(
         AppAssets.logo,
         height: 34,
@@ -49,13 +49,6 @@ class HomeScreen extends ConsumerWidget {
         ),
       ],
       children: <Widget>[
-        _SearchBar(hint: t.homeSearchHint, onTap: () => _openSearch(ref)),
-        const SizedBox(height: 24),
-        SectionHeader(
-          title: t.homeCategoriesTitle,
-          action: t.seeAll,
-          onAction: () => _openSearch(ref),
-        ),
         categoriesAsync.when(
           data: (categories) => _CategoriesGrid(
             categories: categories,
@@ -65,50 +58,91 @@ class HomeScreen extends ConsumerWidget {
           loading: () => const _Loader(),
           error: (err, _) => Text('${t.loadError}: $err'),
         ),
-        const SizedBox(height: 28),
-        SectionHeader(title: t.homeCitiesTitle),
-        Text(
-          t.homeCitiesSubtitle,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF737373)),
+        const SizedBox(height: 24),
+        _CitiesSectionHeader(
+          title: t.homeCitiesTitle,
+          subtitle: t.homeCitiesSubtitle,
         ),
         const SizedBox(height: 14),
         citiesAsync.when(
           data: (cities) => Column(
             children: cities
-                .map((city) => _CityCard(
-                      city: city,
-                      language: lang,
-                      onTap: () => _openSearch(ref, cityId: city.id),
-                    ))
+                .map(
+                  (city) => _CityCard(
+                    city: city,
+                    language: lang,
+                    onTap: () => _openSearch(ref, cityId: city.id),
+                  ),
+                )
                 .toList(growable: false),
           ),
           loading: () => const _Loader(),
           error: (err, _) => Text('${t.loadError}: $err'),
         ),
-        const SizedBox(height: 28),
-        SectionHeader(
-          title: t.homeFeaturedTitle,
-          action: t.seeAll,
-          onAction: () => _openSearch(ref),
-        ),
+        const SizedBox(height: 24),
+        HomeSectionTitle(title: t.homeFeaturedTitle),
         featuredAsync.when(
-          data: (items) => SizedBox(
-            height: 230,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.zero,
-              children: items
-                  .map((item) => FeaturedCard(
+          data: (items) {
+            final double cardWidth = MediaQuery.sizeOf(context).width * 0.85;
+            final double carouselHeight = cardWidth * 10 / 16 + 76;
+            return SizedBox(
+              height: carouselHeight,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.zero,
+                children: items
+                    .map(
+                      (item) => FeaturedCard(
+                        width: cardWidth,
                         establishment: item,
                         onTap: () => context.push(AppRoute.detail(item.id)),
-                      ))
-                  .toList(growable: false),
-            ),
-          ),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            );
+          },
           loading: () => const _Loader(),
           error: (err, _) => Text('${t.loadError}: $err'),
         ),
       ],
+    );
+  }
+}
+
+class _CitiesSectionHeader extends StatelessWidget {
+  const _CitiesSectionHeader({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.2,
+              color: Color(0xFF737373),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -120,33 +154,6 @@ class _Loader extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(child: CircularProgressIndicator()),
       );
-}
-
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.hint, required this.onTap});
-  final String hint;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          children: <Widget>[
-            const Icon(Icons.search, color: Color(0xFF737373)),
-            const SizedBox(width: 12),
-            Text(hint, style: const TextStyle(color: Color(0xFF737373), fontSize: 15)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _CategoriesGrid extends StatelessWidget {
@@ -171,14 +178,14 @@ class _CategoriesGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.45,
+        childAspectRatio: 1.38,
       ),
       itemBuilder: (context, index) {
         final Category category = categories[index];
         return GestureDetector(
           onTap: () => onTap(category),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(kRadiusLg),
+            borderRadius: BorderRadius.circular(kRadiusMd),
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
@@ -188,21 +195,48 @@ class _CategoriesGrid extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: <Color>[Colors.transparent, Colors.black54],
+                      colors: <Color>[
+                        Color(0x1A000000),
+                        Color(0x33000000),
+                        Color(0x1A000000),
+                      ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Text(
-                      category.localizedLabel(language),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          category.localizedLabel(language),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                            height: 1.15,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          category.localizedDescription(language),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.82),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -227,10 +261,10 @@ class _CityCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 150,
+        height: 200,
         margin: const EdgeInsets.only(bottom: 14),
         clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(kRadiusLg)),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(kRadiusMd)),
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[

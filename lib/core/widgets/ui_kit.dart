@@ -9,6 +9,34 @@ import 'package:reservamobile/core/widgets/app_network_image.dart';
 
 const double kRadius = 18;
 const double kRadiusLg = 24;
+/// Matches web `rounded-xl` (12px).
+const double kRadiusSm = 12;
+/// Matches web `rounded-2xl` (16px).
+const double kRadiusMd = 16;
+
+/// Homepage section title — mirrors web `text-xl font-medium tracking-tight`.
+class HomeSectionTitle extends StatelessWidget {
+  const HomeSectionTitle({super.key, required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.3,
+          height: 1.2,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+}
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title, this.action, this.onAction});
@@ -137,69 +165,192 @@ class FilterPill extends StatelessWidget {
   }
 }
 
-/// Horizontal establishment card used in the featured carousel.
+/// Horizontal establishment card — matches web homepage `ListingCard`.
 class FeaturedCard extends ConsumerWidget {
-  const FeaturedCard({super.key, required this.establishment, required this.onTap});
+  const FeaturedCard({
+    super.key,
+    required this.establishment,
+    required this.width,
+    required this.onTap,
+  });
 
   final Establishment establishment;
+  final double width;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppLanguage lang = ref.watch(languageProvider);
     final City? city = cityById(establishment.cityId);
+    final String priceDisplay = establishment.priceLevel;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 240,
-        margin: const EdgeInsets.only(right: 14),
+        width: width,
+        margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(kRadiusLg),
-          border: Border.all(color: const Color(0xFFEDEDED)),
+          borderRadius: BorderRadius.circular(kRadiusSm),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            AspectRatio(
-              aspectRatio: 16 / 11,
-              child: AppNetworkImage(url: establishment.coverImage),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(kRadiusSm),
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    AppNetworkImage(url: establishment.coverImage),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: _ImageOverlayPill(
+                        label: categoryLabel(establishment.category, lang),
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: _FeaturedRatingPill(rating: establishment.rating),
+                    ),
+                  ],
+                ),
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  Text(
+                    establishment.localizedName(lang),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      height: 1.2,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     children: <Widget>[
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: Color(0xFF737373),
+                      ),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          establishment.localizedName(lang),
+                          city?.localizedName(lang) ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            fontSize: 13,
+                            color: Color(0xFF737373),
+                            height: 1.2,
                           ),
                         ),
                       ),
-                      RatingBadge(rating: establishment.rating, compact: true),
+                      if (priceDisplay.isNotEmpty)
+                        Text(
+                          priceDisplay,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          ),
+                        ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${categoryLabel(establishment.category, lang)} · ${city?.localizedName(lang) ?? ''}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF737373)),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FeaturedRatingPill extends StatelessWidget {
+  const _FeaturedRatingPill({required this.rating});
+
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Icon(Icons.star_rounded, size: 12, color: AppColors.primary),
+          const SizedBox(width: 4),
+          Text(
+            rating.toStringAsFixed(1),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImageOverlayPill extends StatelessWidget {
+  const _ImageOverlayPill({
+    required this.label,
+    this.icon,
+    this.iconColor,
+  });
+
+  final String label;
+  final IconData? icon;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (icon != null) ...<Widget>[
+            Icon(icon, size: 14, color: iconColor ?? AppColors.textPrimary),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              height: 1.1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -222,7 +373,7 @@ class EstablishmentCard extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(kRadiusLg),
+          borderRadius: BorderRadius.circular(kRadius),
           border: Border.all(color: const Color(0xFFEDEDED)),
         ),
         clipBehavior: Clip.antiAlias,
@@ -238,20 +389,17 @@ class EstablishmentCard extends ConsumerWidget {
                 Positioned(
                   top: 12,
                   left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      categoryLabel(establishment.category, lang),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                  child: _ImageOverlayPill(
+                    label: categoryLabel(establishment.category, lang),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _ImageOverlayPill(
+                    label: establishment.rating.toStringAsFixed(1),
+                    icon: Icons.star_rounded,
+                    iconColor: AppColors.primary,
                   ),
                 ),
               ],
@@ -261,22 +409,15 @@ class EstablishmentCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          establishment.localizedName(lang),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      RatingBadge(rating: establishment.rating, reviewCount: establishment.reviewCount),
-                    ],
+                  Text(
+                    establishment.localizedName(lang),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(

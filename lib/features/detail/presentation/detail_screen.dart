@@ -11,6 +11,7 @@ import 'package:reservamobile/core/i18n/labels.dart';
 import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
 import 'package:reservamobile/core/widgets/app_network_image.dart';
+import 'package:reservamobile/core/widgets/app_scaffold.dart';
 import 'package:reservamobile/core/widgets/ui_kit.dart';
 import 'package:reservamobile/features/detail/presentation/widgets/location_map.dart';
 
@@ -75,7 +76,12 @@ class _DetailView extends ConsumerWidget {
           SliverToBoxAdapter(child: _Gallery(images: images)),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                kScreenPaddingHorizontal,
+                18,
+                kScreenPaddingHorizontal,
+                0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -396,7 +402,12 @@ class _BookingBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + MediaQuery.paddingOf(context).bottom),
+      padding: EdgeInsets.fromLTRB(
+        kScreenPaddingHorizontal,
+        12,
+        kScreenPaddingHorizontal,
+        12 + MediaQuery.paddingOf(context).bottom,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFEDEDED))),

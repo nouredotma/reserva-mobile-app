@@ -49,7 +49,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return AppScaffold(
       title: t.searchTitle,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+      padding: kScreenContentPadding,
       actions: <Widget>[
         IconButton(
           tooltip: t.filters,
