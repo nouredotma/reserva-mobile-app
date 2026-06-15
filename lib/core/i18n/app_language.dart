@@ -1,19 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Supported UI languages, mirroring the web app's `en` / `fr` switcher.
+/// Supported UI languages: English, French, Spanish, and Arabic.
 enum AppLanguage {
   en,
-  fr;
+  fr,
+  es,
+  ar;
 
-  bool get isFrench => this == AppLanguage.fr;
+  String get code => switch (this) {
+    AppLanguage.en => 'en',
+    AppLanguage.fr => 'fr',
+    AppLanguage.es => 'es',
+    AppLanguage.ar => 'ar',
+  };
 
-  String get code => isFrench ? 'fr' : 'en';
+  String get label => switch (this) {
+    AppLanguage.en => 'English',
+    AppLanguage.fr => 'Français',
+    AppLanguage.es => 'Español',
+    AppLanguage.ar => 'العربية',
+  };
 
-  String get label => isFrench ? 'Français' : 'English';
-
-  static AppLanguage fromCode(String? code) =>
-      code == 'fr' ? AppLanguage.fr : AppLanguage.en;
+  static AppLanguage fromCode(String? code) => switch (code) {
+    'fr' => AppLanguage.fr,
+    'es' => AppLanguage.es,
+    'ar' => AppLanguage.ar,
+    _ => AppLanguage.en,
+  };
 }
 
 class LanguageController extends StateNotifier<AppLanguage> {
@@ -26,10 +40,6 @@ class LanguageController extends StateNotifier<AppLanguage> {
   void setLanguage(AppLanguage language) {
     state = language;
     _prefs?.setString(_storageKey, language.code);
-  }
-
-  void toggle() {
-    setLanguage(state.isFrench ? AppLanguage.en : AppLanguage.fr);
   }
 }
 

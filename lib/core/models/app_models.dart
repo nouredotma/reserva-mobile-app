@@ -1,4 +1,5 @@
 import 'package:reservamobile/core/i18n/app_language.dart';
+import 'package:reservamobile/core/i18n/localized_value.dart';
 
 /// Establishment categories, mirroring the web app's `EstablishmentCategory`.
 enum EstablishmentCategory {
@@ -13,7 +14,6 @@ enum EstablishmentCategory {
 
   const EstablishmentCategory(this.slug);
 
-  /// The URL/key slug used by the web app (e.g. `day-passes`).
   final String slug;
 
   static EstablishmentCategory? fromSlug(String? slug) {
@@ -36,77 +36,123 @@ class City {
   const City({
     required this.id,
     required this.name,
-    required this.nameFr,
+    required this.nameEs,
+    this.nameAr,
     required this.slug,
     required this.region,
-    required this.regionFr,
+    required this.regionEs,
+    this.regionAr,
     required this.image,
     required this.coordinates,
     required this.description,
-    required this.descriptionFr,
+    required this.descriptionEs,
+    this.descriptionAr,
+    this.nameFr,
+    this.regionFr,
+    this.descriptionFr,
   });
 
   final String id;
   final String name;
-  final String nameFr;
+  final String nameEs;
+  final String? nameAr;
   final String slug;
   final String region;
-  final String regionFr;
-
-  /// Local asset path for the city cover image.
+  final String regionEs;
+  final String? regionAr;
   final String image;
   final Coordinates coordinates;
   final String description;
-  final String descriptionFr;
+  final String descriptionEs;
+  final String? descriptionAr;
+  final String? nameFr;
+  final String? regionFr;
+  final String? descriptionFr;
 
-  String localizedName(AppLanguage language) =>
-      language.isFrench ? nameFr : name;
-  String localizedRegion(AppLanguage language) =>
-      language.isFrench ? regionFr : region;
-  String localizedDescription(AppLanguage language) =>
-      language.isFrench ? descriptionFr : description;
+  String localizedName(AppLanguage language) => resolveLocalized(
+    language,
+    en: name,
+    es: nameEs,
+    ar: nameAr,
+    fr: nameFr ?? nameEs,
+    registryKey: 'city.$name.name',
+  );
+  String localizedRegion(AppLanguage language) => localizedPick(
+    language,
+    en: region,
+    es: regionEs,
+    ar: regionAr,
+    fr: regionFr ?? regionEs,
+  );
+  String localizedDescription(AppLanguage language) => localizedPick(
+    language,
+    en: description,
+    es: descriptionEs,
+    ar: descriptionAr,
+    fr: descriptionFr,
+  );
 }
 
 class Category {
   const Category({
     required this.key,
     required this.label,
-    required this.labelFr,
+    required this.labelEs,
+    this.labelAr,
     required this.image,
     required this.description,
-    required this.descriptionFr,
+    required this.descriptionEs,
+    this.descriptionAr,
   });
 
   final EstablishmentCategory key;
   final String label;
-  final String labelFr;
-
-  /// Remote image URL (Unsplash) — loaded via network.
+  final String labelEs;
+  final String? labelAr;
   final String image;
   final String description;
-  final String descriptionFr;
+  final String descriptionEs;
+  final String? descriptionAr;
 
-  String localizedLabel(AppLanguage language) =>
-      language.isFrench ? labelFr : label;
-  String localizedDescription(AppLanguage language) =>
-      language.isFrench ? descriptionFr : description;
+  String localizedLabel(AppLanguage language) => resolveLocalized(
+    language,
+    en: label,
+    es: labelEs,
+    ar: labelAr,
+    registryKey: 'cat.${key.slug}.label',
+  );
+  String localizedDescription(AppLanguage language) => resolveLocalized(
+    language,
+    en: description,
+    es: descriptionEs,
+    ar: descriptionAr,
+    registryKey: 'cat.${key.slug}.desc',
+  );
 }
 
 class Subcategory {
   const Subcategory({
     required this.key,
     required this.label,
-    required this.labelFr,
+    required this.labelEs,
+    this.labelAr,
     required this.categoryKey,
   });
 
   final String key;
   final String label;
-  final String labelFr;
+  final String labelEs;
+  final String? labelAr;
   final EstablishmentCategory categoryKey;
 
-  String localizedLabel(AppLanguage language) =>
-      language.isFrench ? labelFr : label;
+  String localizedLabel(AppLanguage language) => resolveLocalized(
+    language,
+    en: label,
+    es: labelEs,
+    ar: labelAr,
+    fr: labelEs,
+    registryKey: 'sub.$key.label',
+  );
 }
 
 class Establishment {
@@ -114,14 +160,17 @@ class Establishment {
     required this.id,
     required this.ownerId,
     required this.name,
-    required this.nameFr,
+    required this.nameEs,
+    this.nameAr,
     required this.slug,
     required this.category,
     required this.subcategory,
     required this.shortDescription,
-    required this.shortDescriptionFr,
+    required this.shortDescriptionEs,
+    this.shortDescriptionAr,
     required this.fullDescription,
-    required this.fullDescriptionFr,
+    required this.fullDescriptionEs,
+    this.fullDescriptionAr,
     required this.cityId,
     required this.address,
     required this.coordinates,
@@ -141,22 +190,23 @@ class Establishment {
   final String id;
   final String ownerId;
   final String name;
-  final String nameFr;
+  final String nameEs;
+  final String? nameAr;
   final String slug;
   final EstablishmentCategory category;
   final String? subcategory;
   final String shortDescription;
-  final String shortDescriptionFr;
+  final String shortDescriptionEs;
+  final String? shortDescriptionAr;
   final String fullDescription;
-  final String fullDescriptionFr;
+  final String fullDescriptionEs;
+  final String? fullDescriptionAr;
   final String cityId;
   final String address;
   final Coordinates coordinates;
   final String phone;
   final String email;
   final String? website;
-
-  /// Remote image URL.
   final String coverImage;
   final List<String> galleryImages;
   final double rating;
@@ -168,24 +218,44 @@ class Establishment {
 
   List<String> get allImages => <String>[coverImage, ...galleryImages];
 
-  String localizedName(AppLanguage language) =>
-      language.isFrench ? nameFr : name;
-  String localizedShortDescription(AppLanguage language) =>
-      language.isFrench ? shortDescriptionFr : shortDescription;
-  String localizedFullDescription(AppLanguage language) =>
-      language.isFrench ? fullDescriptionFr : fullDescription;
+  String localizedName(AppLanguage language) => resolveLocalized(
+    language,
+    en: name,
+    es: nameEs,
+    ar: nameAr,
+    fr: nameEs,
+    registryKey: 'est.$id.name',
+  );
+  String localizedShortDescription(AppLanguage language) => resolveLocalized(
+    language,
+    en: shortDescription,
+    es: shortDescriptionEs,
+    ar: shortDescriptionAr,
+    fr: shortDescriptionEs,
+    registryKey: 'est.$id.short',
+  );
+  String localizedFullDescription(AppLanguage language) => resolveLocalized(
+    language,
+    en: fullDescription,
+    es: fullDescriptionEs,
+    ar: fullDescriptionAr,
+    fr: fullDescriptionEs,
+    registryKey: 'est.$id.full',
+  );
 }
 
 class AddOn {
   const AddOn({
     required this.name,
-    required this.nameFr,
+    required this.nameEs,
+    this.nameAr,
     required this.price,
     this.description,
   });
 
   final String name;
-  final String nameFr;
+  final String nameEs;
+  final String? nameAr;
   final double price;
   final String? description;
 }
@@ -195,10 +265,12 @@ class ServiceItem {
     required this.id,
     required this.establishmentId,
     required this.name,
-    required this.nameFr,
+    required this.nameEs,
+    this.nameAr,
     required this.slug,
     required this.shortDescription,
-    this.shortDescriptionFr,
+    this.shortDescriptionEs,
+    this.shortDescriptionAr,
     required this.serviceType,
     required this.price,
     this.currency = 'MAD',
@@ -226,10 +298,12 @@ class ServiceItem {
   final String id;
   final String establishmentId;
   final String name;
-  final String nameFr;
+  final String nameEs;
+  final String? nameAr;
   final String slug;
   final String shortDescription;
-  final String? shortDescriptionFr;
+  final String? shortDescriptionEs;
+  final String? shortDescriptionAr;
   final String serviceType;
   final double price;
   final String currency;
@@ -253,12 +327,22 @@ class ServiceItem {
   final bool isFeatured;
   final int sortOrder;
 
-  String localizedName(AppLanguage language) =>
-      language.isFrench ? nameFr : name;
-  String localizedShortDescription(AppLanguage language) =>
-      language.isFrench && shortDescriptionFr != null
-      ? shortDescriptionFr!
-      : shortDescription;
+  String localizedName(AppLanguage language) => resolveLocalized(
+    language,
+    en: name,
+    es: nameEs,
+    ar: nameAr,
+    fr: nameEs,
+    registryKey: 'svc.$id.name',
+  );
+  String localizedShortDescription(AppLanguage language) => resolveLocalized(
+    language,
+    en: shortDescription,
+    es: shortDescriptionEs ?? shortDescription,
+    ar: shortDescriptionAr,
+    fr: shortDescriptionEs,
+    registryKey: 'svc.$id.short',
+  );
 }
 
 class ReviewItem {
@@ -269,9 +353,13 @@ class ReviewItem {
     required this.userAvatar,
     required this.rating,
     required this.title,
-    required this.titleFr,
+    required this.titleEs,
+    this.titleAr,
+    this.titleFr,
     required this.content,
-    required this.contentFr,
+    required this.contentEs,
+    this.contentAr,
+    this.contentFr,
     required this.isVerified,
     required this.createdAt,
   });
@@ -282,27 +370,33 @@ class ReviewItem {
   final String userAvatar;
   final double rating;
   final String title;
-  final String titleFr;
+  final String titleEs;
+  final String? titleAr;
+  final String? titleFr;
   final String content;
-  final String contentFr;
+  final String contentEs;
+  final String? contentAr;
+  final String? contentFr;
   final bool isVerified;
   final DateTime createdAt;
 
   String localizedTitle(AppLanguage language) =>
-      language.isFrench ? titleFr : title;
-  String localizedContent(AppLanguage language) =>
-      language.isFrench ? contentFr : content;
+      localizedPick(language, en: title, es: titleEs, ar: titleAr, fr: titleFr);
+  String localizedContent(AppLanguage language) => localizedPick(
+    language,
+    en: content,
+    es: contentEs,
+    ar: contentAr,
+    fr: contentFr,
+  );
 }
 
-/// Opening hour entry for a single day.
 class OpeningHours {
   const OpeningHours({required this.open, required this.close});
 
   final String open;
   final String close;
 }
-
-// ─── Category-specific detail tables ─────────────────────────────────────────
 
 class VoyageDetails {
   const VoyageDetails({
@@ -424,16 +518,19 @@ class SpectaclesDetails {
   final String cancellationPolicy;
 }
 
-/// Shared shape for conciergerie / corporate / services experiences.
 class ExperienceDetails {
   const ExperienceDetails({
     required this.establishmentId,
     required this.highlights,
-    required this.highlightsFr,
+    required this.highlightsEs,
+    this.highlightsAr,
+    this.highlightsFr,
     required this.bookingMode,
     this.openingHours,
     required this.availabilityNote,
-    required this.availabilityNoteFr,
+    required this.availabilityNoteEs,
+    this.availabilityNoteAr,
+    this.availabilityNoteFr,
     required this.cancellationPolicy,
     this.minGroupSize,
     this.maxGroupSize,
@@ -442,20 +539,35 @@ class ExperienceDetails {
 
   final String establishmentId;
   final List<String> highlights;
-  final List<String> highlightsFr;
+  final List<String> highlightsEs;
+  final List<String>? highlightsAr;
+  final List<String>? highlightsFr;
   final String bookingMode;
   final Map<String, OpeningHours>? openingHours;
   final String availabilityNote;
-  final String availabilityNoteFr;
+  final String availabilityNoteEs;
+  final String? availabilityNoteAr;
+  final String? availabilityNoteFr;
   final String cancellationPolicy;
   final int? minGroupSize;
   final int? maxGroupSize;
   final List<String>? serviceArea;
 
-  List<String> localizedHighlights(AppLanguage language) =>
-      language.isFrench ? highlightsFr : highlights;
-  String localizedAvailabilityNote(AppLanguage language) =>
-      language.isFrench ? availabilityNoteFr : availabilityNote;
+  List<String> localizedHighlights(AppLanguage language) => switch (language) {
+    AppLanguage.es => highlightsEs,
+    AppLanguage.ar => highlightsAr ?? highlights,
+    AppLanguage.fr => highlightsFr ?? highlights,
+    AppLanguage.en => highlights,
+  };
+
+  String localizedAvailabilityNote(AppLanguage language) => resolveLocalized(
+    language,
+    en: availabilityNote,
+    es: availabilityNoteEs,
+    ar: availabilityNoteAr,
+    fr: availabilityNoteFr,
+    registryKey: 'exp.$establishmentId.availability',
+  );
 }
 
 enum BookingStatus { pending, confirmed, cancelled, completed }
@@ -465,13 +577,16 @@ class BookingItem {
     required this.id,
     required this.establishmentId,
     required this.establishmentName,
-    required this.establishmentNameFr,
+    required this.establishmentNameEs,
+    this.establishmentNameAr,
     required this.category,
     required this.slug,
     required this.serviceName,
-    required this.serviceNameFr,
+    required this.serviceNameEs,
+    this.serviceNameAr,
     required this.cityName,
-    required this.cityNameFr,
+    required this.cityNameEs,
+    this.cityNameAr,
     required this.address,
     required this.coverImage,
     required this.bookingDate,
@@ -480,19 +595,23 @@ class BookingItem {
     required this.totalPriceMad,
     required this.status,
     required this.notes,
-    required this.notesFr,
+    required this.notesEs,
+    this.notesAr,
   });
 
   final String id;
   final String establishmentId;
   final String establishmentName;
-  final String establishmentNameFr;
+  final String establishmentNameEs;
+  final String? establishmentNameAr;
   final EstablishmentCategory category;
   final String slug;
   final String serviceName;
-  final String serviceNameFr;
+  final String serviceNameEs;
+  final String? serviceNameAr;
   final String cityName;
-  final String cityNameFr;
+  final String cityNameEs;
+  final String? cityNameAr;
   final String address;
   final String coverImage;
   final DateTime bookingDate;
@@ -501,16 +620,41 @@ class BookingItem {
   final double totalPriceMad;
   final BookingStatus status;
   final String notes;
-  final String notesFr;
+  final String notesEs;
+  final String? notesAr;
 
-  String localizedEstablishmentName(AppLanguage language) =>
-      language.isFrench ? establishmentNameFr : establishmentName;
-  String localizedServiceName(AppLanguage language) =>
-      language.isFrench ? serviceNameFr : serviceName;
-  String localizedCityName(AppLanguage language) =>
-      language.isFrench ? cityNameFr : cityName;
-  String localizedNotes(AppLanguage language) =>
-      language.isFrench ? notesFr : notes;
+  String localizedEstablishmentName(AppLanguage language) => resolveLocalized(
+    language,
+    en: establishmentName,
+    es: establishmentNameEs,
+    ar: establishmentNameAr,
+    fr: establishmentNameEs,
+    registryKey: 'est.$establishmentId.name',
+  );
+  String localizedServiceName(AppLanguage language) => resolveLocalized(
+    language,
+    en: serviceName,
+    es: serviceNameEs,
+    ar: serviceNameAr,
+    fr: serviceNameEs,
+    registryKey: 'booking.$id.service',
+  );
+  String localizedCityName(AppLanguage language) => resolveLocalized(
+    language,
+    en: cityName,
+    es: cityNameEs,
+    ar: cityNameAr,
+    fr: cityNameEs,
+    registryKey: 'city.$cityName.name',
+  );
+  String localizedNotes(AppLanguage language) => resolveLocalized(
+    language,
+    en: notes,
+    es: notesEs,
+    ar: notesAr,
+    fr: notesEs,
+    registryKey: 'booking.$id.notes',
+  );
 }
 
 class AppUser {
@@ -525,4 +669,17 @@ class AppUser {
   final String fullName;
   final String email;
   final String phone;
+
+  AppUser copyWith({
+    String? fullName,
+    String? email,
+    String? phone,
+  }) {
+    return AppUser(
+      id: id,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+    );
+  }
 }

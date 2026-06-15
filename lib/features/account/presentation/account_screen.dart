@@ -47,44 +47,62 @@ class AccountScreen extends ConsumerWidget {
       title: t.account,
       padding: kScreenContentPadding,
       children: <Widget>[
-        // Profile / guest card
         if (authState.isLoggedIn && authState.user != null)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9F9F9),
-              borderRadius: BorderRadius.circular(kRadiusSm),
-              border: Border.all(color: const Color(0xFFEDEDED)),
-            ),
-            child: Row(
-              children: <Widget>[
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.primary,
-                  child: const Icon(
-                    Icons.person,
-                    color: AppColors.textPrimary,
-                    size: 24,
+          GestureDetector(
+            onTap: () => context.push(AppRoute.profile),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F9F9),
+                borderRadius: BorderRadius.circular(kRadiusSm),
+                border: Border.all(color: const Color(0xFFEDEDED)),
+              ),
+              child: Row(
+                children: <Widget>[
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary,
+                    child: const Icon(
+                      Icons.person,
+                      color: AppColors.textPrimary,
+                      size: 24,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        authState.user!.fullName,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        authState.user!.email,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF737373)),
-                      ),
-                    ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          authState.user!.fullName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          authState.user!.email,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF737373),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t.myProfile,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF9E9E9E),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const Icon(Icons.chevron_right, color: Color(0xFF9E9E9E)),
+                ],
+              ),
             ),
           )
         else
@@ -119,15 +137,20 @@ class AccountScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            lang.isFrench ? 'Invité' : 'Guest',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            t.guest,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            lang.isFrench
-                                ? 'Connectez-vous pour gérer vos réservations'
-                                : 'Log in to manage your bookings',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF737373), height: 1.25),
+                            t.guestPrompt,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF737373),
+                              height: 1.25,
+                            ),
                           ),
                         ],
                       ),
@@ -149,7 +172,10 @@ class AccountScreen extends ConsumerWidget {
                     ),
                     child: Text(
                       t.logIn,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -157,33 +183,28 @@ class AccountScreen extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: 24),
-
-        // Language switcher
-        Text(t.language, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        Text(
+          t.language,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 10),
         Row(
           children: <Widget>[
-            Expanded(
-              child: _LangButton(
-                label: 'English',
-                selected: !lang.isFrench,
-                onTap: () =>
-                    ref.read(languageProvider.notifier).setLanguage(AppLanguage.en),
+            for (final AppLanguage option in AppLanguage.values) ...<Widget>[
+              if (option != AppLanguage.values.first) const SizedBox(width: 8),
+              Expanded(
+                child: _LangButton(
+                  label: option.label,
+                  selected: lang == option,
+                  onTap: () => ref
+                      .read(languageProvider.notifier)
+                      .setLanguage(option),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _LangButton(
-                label: 'Français',
-                selected: lang.isFrench,
-                onTap: () =>
-                    ref.read(languageProvider.notifier).setLanguage(AppLanguage.fr),
-              ),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: 24),
-
         _MenuTile(
           icon: Icons.receipt_long_outlined,
           label: t.myBookings,
@@ -196,7 +217,7 @@ class AccountScreen extends ConsumerWidget {
         ),
         _MenuTile(
           icon: Icons.support_agent_outlined,
-          label: lang.isFrench ? 'Support' : 'Contact Support',
+          label: t.contactSupport,
           onTap: () => context.push(AppRoute.support),
           backgroundColor: const Color(0xFFF0FDF4),
           borderColor: const Color(0xFF86EFAC),
@@ -213,7 +234,9 @@ class AccountScreen extends ConsumerWidget {
               foregroundColor: const Color(0xFFB91C1C),
               side: const BorderSide(color: Color(0xFFFCA5A5)),
               minimumSize: const Size.fromHeight(52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
             child: Text(
               t.logOut,
@@ -231,7 +254,12 @@ class AccountScreen extends ConsumerWidget {
 }
 
 class _LangButton extends StatelessWidget {
-  const _LangButton({required this.label, required this.selected, required this.onTap});
+  const _LangButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -241,7 +269,7 @@ class _LangButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? AppColors.textPrimary : const Color(0xFFF5F5F5),
@@ -252,8 +280,9 @@ class _LangButton extends StatelessWidget {
         ),
         child: Text(
           label,
+          textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
             color: selected ? Colors.white : AppColors.textPrimary,
           ),
@@ -274,6 +303,7 @@ class _MenuTile extends StatelessWidget {
     this.iconColor,
     this.chevronColor,
   });
+
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -309,7 +339,10 @@ class _MenuTile extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right, color: chevronColor ?? const Color(0xFF9E9E9E)),
+            Icon(
+              Icons.chevron_right,
+              color: chevronColor ?? const Color(0xFF9E9E9E),
+            ),
           ],
         ),
       ),

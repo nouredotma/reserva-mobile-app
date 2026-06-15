@@ -31,9 +31,7 @@ class BookingsScreen extends ConsumerWidget {
             children: <Widget>[
               const Icon(Icons.receipt_long_outlined, size: 48, color: Color(0xFFBDBDBD)),
               const SizedBox(height: 12),
-              Text(lang.isFrench
-                  ? 'Connectez-vous pour voir vos réservations.'
-                  : 'Log in to see your bookings.'),
+              Text(t.loginToSeeBookings),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => context.push(AppRoute.login),
@@ -76,7 +74,7 @@ class BookingsScreen extends ConsumerWidget {
           return AppScaffold(
             title: t.myBookings,
             body: Center(
-              child: Text(lang.isFrench ? 'Aucune réservation.' : 'No bookings yet.'),
+              child: Text(t.noBookings),
             ),
           );
         }

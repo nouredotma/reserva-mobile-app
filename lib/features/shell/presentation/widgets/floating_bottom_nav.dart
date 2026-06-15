@@ -53,13 +53,17 @@ class FloatingBottomNav extends ConsumerWidget {
                 final itemCount = destinations.length;
                 final itemWidth = constraints.maxWidth / itemCount;
                 final pillWidth = itemWidth - _pillInset * 2;
+                final bool isRtl =
+                    Directionality.of(context) == TextDirection.rtl;
+                final int pillIndex =
+                    isRtl ? itemCount - 1 - selectedIndex : selectedIndex;
 
                 return Stack(
                   children: [
                     AnimatedPositioned(
                       duration: const Duration(milliseconds: 280),
                       curve: Curves.easeOutCubic,
-                      left: selectedIndex * itemWidth + _pillInset,
+                      left: pillIndex * itemWidth + _pillInset,
                       top: 0,
                       bottom: 0,
                       width: pillWidth,

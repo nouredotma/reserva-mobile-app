@@ -871,7 +871,7 @@ class _OpeningHours extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(lang.isFrench ? 'Horaires' : 'Opening hours',
+          Text(t.openingHours,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           ...days.map((d) => Padding(

@@ -99,7 +99,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
           TextField(
             controller: _titleController,
             decoration: InputDecoration(
-              hintText: lang.isFrench ? 'Titre' : 'Title',
+              hintText: t.reviewTitle,
               filled: true,
               fillColor: const Color(0xFFF5F5F5),
               border: OutlineInputBorder(
@@ -113,7 +113,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
             controller: _contentController,
             maxLines: 3,
             decoration: InputDecoration(
-              hintText: lang.isFrench ? 'Partagez votre expérience' : 'Share your experience',
+              hintText: t.reviewContent,
               filled: true,
               fillColor: const Color(0xFFF5F5F5),
               border: OutlineInputBorder(
@@ -131,7 +131,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
               minimumSize: const Size.fromHeight(50),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
             ),
-            child: Text(lang.isFrench ? 'Envoyer' : 'Submit'),
+            child: Text(t.submitReview),
           ),
         ] else ...<Widget>[
           Container(
@@ -146,9 +146,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  lang.isFrench
-                      ? 'Vous devez être connecté et avoir une réservation confirmée pour laisser un avis.'
-                      : 'You must be logged in and have a confirmed booking to leave a review.',
+                  t.loginToReview,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF525252),
@@ -167,7 +165,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    child: Text(lang.isFrench ? 'Se connecter' : 'Log in'),
+                    child: Text(t.logIn),
                   ),
               ],
             ),

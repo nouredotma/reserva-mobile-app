@@ -62,6 +62,28 @@ class AuthSessionController extends StateNotifier<AuthSessionState> {
       email: email,
       phone: phone,
     );
+    await _persistUser(prefs, user);
+    state = state.copyWith(user: user, isLoading: false);
+  }
+
+  Future<void> updateProfile({
+    required String fullName,
+    required String email,
+    required String phone,
+  }) async {
+    final AppUser? current = state.user;
+    if (current == null) return;
+    final AppUser updated = current.copyWith(
+      fullName: fullName,
+      email: email,
+      phone: phone,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    await _persistUser(prefs, updated);
+    state = state.copyWith(user: updated);
+  }
+
+  Future<void> _persistUser(SharedPreferences prefs, AppUser user) async {
     await prefs.setString(
       _userKey,
       jsonEncode({
@@ -72,7 +94,6 @@ class AuthSessionController extends StateNotifier<AuthSessionState> {
       }),
     );
     await prefs.setString(_tokenKey, 'mock-token-${user.id}');
-    state = state.copyWith(user: user, isLoading: false);
   }
 
   Future<void> logout() async {

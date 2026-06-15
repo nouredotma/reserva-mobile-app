@@ -62,7 +62,7 @@ class MockReservaRepository implements ReservaRepository {
       final queryOk = normalized == null ||
           normalized.isEmpty ||
           e.name.toLowerCase().contains(normalized) ||
-          e.nameFr.toLowerCase().contains(normalized) ||
+          e.nameEs.toLowerCase().contains(normalized) ||
           e.tags.any((t) => t.toLowerCase().contains(normalized)) ||
           e.address.toLowerCase().contains(normalized);
       return cityOk && categoryOk && subOk && cuisineOk && ratingOk && queryOk;
@@ -193,13 +193,13 @@ class MockReservaRepository implements ReservaRepository {
       id: 'bk-${DateTime.now().millisecondsSinceEpoch}',
       establishmentId: establishment.id,
       establishmentName: establishment.name,
-      establishmentNameFr: establishment.nameFr,
+      establishmentNameEs: establishment.nameEs,
       category: establishment.category,
       slug: establishment.slug,
       serviceName: service.name,
-      serviceNameFr: service.nameFr,
+      serviceNameEs: service.nameEs,
       cityName: city?.name ?? '',
-      cityNameFr: city?.nameFr ?? '',
+      cityNameEs: city?.nameEs ?? '',
       address: establishment.address,
       coverImage: establishment.coverImage,
       bookingDate: bookingDate,
@@ -210,7 +210,7 @@ class MockReservaRepository implements ReservaRepository {
           ? BookingStatus.pending
           : BookingStatus.confirmed,
       notes: notes,
-      notesFr: notes,
+      notesEs: notes,
     );
     _bookings.insert(0, booking);
     return booking;
@@ -231,9 +231,9 @@ class MockReservaRepository implements ReservaRepository {
           'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face&q=80',
       rating: rating,
       title: title,
-      titleFr: title,
+      titleEs: title,
       content: content,
-      contentFr: content,
+      contentEs: content,
       isVerified: false,
       createdAt: DateTime.now(),
     );

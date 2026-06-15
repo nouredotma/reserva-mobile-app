@@ -1,55 +1,63 @@
 import 'package:reservamobile/core/i18n/app_language.dart';
+import 'package:reservamobile/core/i18n/localized_value.dart';
 
 class CuisineLabel {
-  const CuisineLabel(this.en, this.fr);
+  const CuisineLabel(this.en, this.fr, this.es, this.ar);
   final String en;
   final String fr;
+  final String es;
+  final String ar;
 }
 
-/// Localized cuisine labels, mirroring the web app's `CUISINES_LOCALIZED`.
 const Map<String, CuisineLabel> cuisinesLocalized = <String, CuisineLabel>{
-  'moroccan': CuisineLabel('Moroccan', 'Marocain'),
-  'mediterranean': CuisineLabel('Mediterranean', 'Méditerranéen'),
-  'traditional': CuisineLabel('Traditional', 'Traditionnel'),
-  'modern': CuisineLabel('Modern Moroccan', 'Marocain Moderne'),
-  'french': CuisineLabel('French', 'Français'),
-  'fusion': CuisineLabel('Fusion', 'Fusion'),
-  'seafood': CuisineLabel('Seafood', 'Fruits de Mer'),
-  'fine_dining': CuisineLabel('Fine Dining', 'Haute Gastronomie'),
-  'italian': CuisineLabel('Italian', 'Italien'),
-  'japanese': CuisineLabel('Japanese', 'Japonais'),
-  'sushi': CuisineLabel('Sushi', 'Sushi'),
-  'american': CuisineLabel('American', 'Américain'),
-  'asian': CuisineLabel('Asian', 'Asiatique'),
-  'bbq': CuisineLabel('BBQ', 'Barbecue'),
-  'bakery': CuisineLabel('Bakery', 'Boulangerie'),
-  'breakfast': CuisineLabel('Breakfast', 'Petit-déjeuner'),
-  'brunch': CuisineLabel('Brunch', 'Brunch'),
-  'burgers': CuisineLabel('Burgers', 'Burgers'),
-  'cafe': CuisineLabel('Cafe', 'Café'),
-  'chinese': CuisineLabel('Chinese', 'Chinois'),
-  'dessert': CuisineLabel('Desserts', 'Desserts'),
-  'fast_food': CuisineLabel('Fast Food', 'Restauration Rapide'),
-  'grill': CuisineLabel('Grill', 'Grillades'),
-  'healthy': CuisineLabel('Healthy', 'Sain'),
-  'indian': CuisineLabel('Indian', 'Indien'),
-  'international': CuisineLabel('International', 'International'),
-  'kebab': CuisineLabel('Kebab', 'Kebab'),
-  'lebanese': CuisineLabel('Lebanese', 'Libanais'),
-  'mexican': CuisineLabel('Mexican', 'Mexicain'),
-  'pizza': CuisineLabel('Pizza', 'Pizza'),
-  'steakhouse': CuisineLabel('Steakhouse', 'Steakhouse'),
-  'street_food': CuisineLabel('Street Food', 'Cuisine de Rue'),
-  'thai': CuisineLabel('Thai', 'Thaïlandais'),
-  'turkish': CuisineLabel('Turkish', 'Turc'),
-  'vegan': CuisineLabel('Vegan', 'Végan'),
-  'vegetarian': CuisineLabel('Vegetarian', 'Végétarien'),
-  'pastries': CuisineLabel('Pastries', 'Pâtisseries'),
-  'tea_room': CuisineLabel('Tea Room', 'Salon de Thé'),
+  'moroccan': CuisineLabel('Moroccan', 'Marocain', 'Marroquí', 'مغربي'),
+  'mediterranean': CuisineLabel('Mediterranean', 'Méditerranéen', 'Mediterráneo', 'متوسطي'),
+  'traditional': CuisineLabel('Traditional', 'Traditionnel', 'Tradicional', 'تقليدي'),
+  'modern': CuisineLabel('Modern Moroccan', 'Marocain moderne', 'Marroquí moderno', 'مغربي حديث'),
+  'french': CuisineLabel('French', 'Français', 'Francés', 'فرنسي'),
+  'fusion': CuisineLabel('Fusion', 'Fusion', 'Fusión', 'فيوجن'),
+  'seafood': CuisineLabel('Seafood', 'Fruits de mer', 'Mariscos', 'مأكولات بحرية'),
+  'fine_dining': CuisineLabel('Fine Dining', 'Gastronomie', 'Alta cocina', 'مطبخ راقٍ'),
+  'italian': CuisineLabel('Italian', 'Italien', 'Italiano', 'إيطالي'),
+  'japanese': CuisineLabel('Japanese', 'Japonais', 'Japonés', 'ياباني'),
+  'sushi': CuisineLabel('Sushi', 'Sushi', 'Sushi', 'سوشي'),
+  'american': CuisineLabel('American', 'Américain', 'Americano', 'أمريكي'),
+  'asian': CuisineLabel('Asian', 'Asiatique', 'Asiático', 'آسيوي'),
+  'bbq': CuisineLabel('BBQ', 'Barbecue', 'Barbacoa', 'شواء'),
+  'bakery': CuisineLabel('Bakery', 'Boulangerie', 'Panadería', 'مخبز'),
+  'breakfast': CuisineLabel('Breakfast', 'Petit-déjeuner', 'Desayuno', 'فطور'),
+  'brunch': CuisineLabel('Brunch', 'Brunch', 'Brunch', 'برانش'),
+  'burgers': CuisineLabel('Burgers', 'Burgers', 'Hamburguesas', 'برغر'),
+  'cafe': CuisineLabel('Cafe', 'Café', 'Café', 'مقهى'),
+  'chinese': CuisineLabel('Chinese', 'Chinois', 'Chino', 'صيني'),
+  'dessert': CuisineLabel('Desserts', 'Desserts', 'Postres', 'حلويات'),
+  'fast_food': CuisineLabel('Fast Food', 'Restauration rapide', 'Comida rápida', 'وجبات سريعة'),
+  'grill': CuisineLabel('Grill', 'Grill', 'Parrilla', 'مشاوي'),
+  'healthy': CuisineLabel('Healthy', 'Sain', 'Saludable', 'صحي'),
+  'indian': CuisineLabel('Indian', 'Indien', 'Indio', 'هندي'),
+  'international': CuisineLabel('International', 'International', 'Internacional', 'عالمي'),
+  'kebab': CuisineLabel('Kebab', 'Kebab', 'Kebab', 'كباب'),
+  'lebanese': CuisineLabel('Lebanese', 'Libanais', 'Libanés', 'لبناني'),
+  'mexican': CuisineLabel('Mexican', 'Mexicain', 'Mexicano', 'مكسيكي'),
+  'pizza': CuisineLabel('Pizza', 'Pizza', 'Pizza', 'بيتزا'),
+  'steakhouse': CuisineLabel('Steakhouse', 'Grill', 'Asador', 'ستيك هاوس'),
+  'street_food': CuisineLabel('Street Food', 'Street food', 'Comida callejera', 'طعام الشارع'),
+  'thai': CuisineLabel('Thai', 'Thaï', 'Tailandés', 'تايلاندي'),
+  'turkish': CuisineLabel('Turkish', 'Turc', 'Turco', 'تركي'),
+  'vegan': CuisineLabel('Vegan', 'Végan', 'Vegano', 'نباتي'),
+  'vegetarian': CuisineLabel('Vegetarian', 'Végétarien', 'Vegetariano', 'نباتي'),
+  'pastries': CuisineLabel('Pastries', 'Pâtisseries', 'Pastelería', 'معجنات'),
+  'tea_room': CuisineLabel('Tea Room', 'Salon de thé', 'Salón de té', 'صالون شاي'),
 };
 
 String cuisineLabel(String key, AppLanguage language) {
   final label = cuisinesLocalized[key];
   if (label == null) return key.replaceAll('_', ' ');
-  return language.isFrench ? label.fr : label.en;
+  return localizedPick(
+    language,
+    en: label.en,
+    fr: label.fr,
+    es: label.es,
+    ar: label.ar,
+  );
 }

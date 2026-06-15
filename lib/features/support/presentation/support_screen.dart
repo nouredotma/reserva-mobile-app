@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:reservamobile/app/theme/app_colors.dart';
 import 'package:reservamobile/core/i18n/app_language.dart';
+import 'package:reservamobile/core/i18n/app_strings.dart';
+import 'package:reservamobile/core/i18n/localized_value.dart';
 import 'package:reservamobile/core/widgets/app_scaffold.dart';
 import 'package:reservamobile/core/widgets/ui_kit.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -37,11 +39,13 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(languageProvider);
-    final bool isFr = lang == AppLanguage.fr;
+    final AppStrings t = ref.watch(stringsProvider);
+    final AppLanguage lang = ref.watch(languageProvider);
+    String s({required String en, required String fr, required String es, required String ar}) =>
+        localizedPick(lang, en: en, fr: fr, es: es, ar: ar);
 
     return AppScaffold(
-      title: isFr ? 'Support' : 'Support',
+      title: t.contactSupport,
       padding: const EdgeInsets.fromLTRB(
         kScreenPaddingHorizontal,
         6,
@@ -60,7 +64,12 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                isFr ? 'Besoin d\'aide ?' : 'Need help?',
+                s(
+                  en: 'Need help?',
+                  fr: 'Besoin d\'aide ?',
+                  es: '¿Necesitas ayuda?',
+                  ar: 'هل تحتاج مساعدة؟',
+                ),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -69,9 +78,12 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                isFr
-                    ? 'Contactez notre équipe support et nous vous répondrons rapidement.'
-                    : 'Contact our support team and we will get back to you quickly.',
+                s(
+                  en: 'Contact our support team and we will get back to you quickly.',
+                  fr: 'Contactez notre équipe support et nous vous répondrons rapidement.',
+                  es: 'Contacta a nuestro equipo de soporte y te responderemos pronto.',
+                  ar: 'تواصل مع فريق الدعم وسنرد عليك بسرعة.',
+                ),
                 style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF15803D),
@@ -111,7 +123,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                     child: TextFormField(
                       controller: _firstNameCtrl,
                       decoration: _dec(
-                        isFr ? 'Prénom *' : 'First name *',
+                        s(en: 'First name *', fr: 'Prénom *', es: 'Nombre *', ar: 'الاسم الأول *'),
                       ),
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                     ),
@@ -120,7 +132,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _lastNameCtrl,
-                      decoration: _dec(isFr ? 'Nom' : 'Last name'),
+                      decoration: _dec(s(en: 'Last name', fr: 'Nom', es: 'Apellido', ar: 'اسم العائلة')),
                     ),
                   ),
                 ],
@@ -136,19 +148,19 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: _dec(isFr ? 'Téléphone' : 'Phone'),
+                decoration: _dec(s(en: 'Phone', fr: 'Téléphone', es: 'Teléfono', ar: 'الهاتف')),
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _subjectCtrl,
-                decoration: _dec(isFr ? 'Sujet' : 'Subject'),
+                decoration: _dec(s(en: 'Subject', fr: 'Sujet', es: 'Asunto', ar: 'الموضوع')),
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _messageCtrl,
                 minLines: 4,
                 maxLines: 6,
-                decoration: _dec(isFr ? 'Message *' : 'Message *').copyWith(
+                decoration: _dec(s(en: 'Message *', fr: 'Message *', es: 'Mensaje *', ar: 'الرسالة *')).copyWith(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(kRadiusSm),
                     borderSide: BorderSide.none,
@@ -167,7 +179,11 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                child: Text(_sending ? (isFr ? 'Envoi...' : 'Sending...') : (isFr ? 'Envoyer' : 'Send message')),
+                child: Text(
+                  _sending
+                      ? s(en: 'Sending...', fr: 'Envoi...', es: 'Enviando...', ar: 'جارٍ الإرسال...')
+                      : s(en: 'Send message', fr: 'Envoyer le message', es: 'Enviar mensaje', ar: 'إرسال الرسالة'),
+                ),
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
@@ -178,7 +194,12 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                   height: 16,
                 ),
                 label: Text(
-                  isFr ? 'Contacter sur WhatsApp' : 'Contact on WhatsApp',
+                  s(
+                    en: 'Contact on WhatsApp',
+                    fr: 'Contacter sur WhatsApp',
+                    es: 'Contactar por WhatsApp',
+                    ar: 'التواصل عبر واتساب',
+                  ),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
