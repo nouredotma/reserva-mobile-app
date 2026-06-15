@@ -612,9 +612,7 @@ class _FooterNexusCredit extends StatelessWidget {
 
 Future<void> _launchFooterUrl(String url) async {
   final Uri uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
 class _HeroMobileFilter extends StatelessWidget {
