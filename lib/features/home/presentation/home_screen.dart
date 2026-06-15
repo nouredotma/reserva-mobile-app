@@ -11,8 +11,12 @@ import 'package:reservamobile/core/models/app_models.dart';
 import 'package:reservamobile/core/providers/reserva_providers.dart';
 import 'package:reservamobile/core/widgets/app_network_image.dart';
 import 'package:reservamobile/core/widgets/ui_kit.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:reservamobile/core/i18n/footer_strings.dart';
 import 'package:reservamobile/features/notifications/presentation/notifications_screen.dart';
+import 'package:reservamobile/features/shell/presentation/widgets/floating_bottom_nav.dart';
 import 'package:reservamobile/features/shell/shell_providers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +26,24 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  static const Color _footerDark = Color(0xFF0A0A0A);
+  static const Color _footerMuted = Color(0xFFA3A3A3);
+
+  static const TextStyle _footerText = TextStyle(
+    color: _footerMuted,
+    fontSize: 12,
+    height: 1.4,
+    fontWeight: FontWeight.w400,
+  );
+
+  static const TextStyle _footerTitle = TextStyle(
+    color: Colors.white,
+    fontSize: 12,
+    height: 1.4,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.6,
+  );
+
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   int _adults = 0;
@@ -45,6 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStrings t = ref.watch(stringsProvider);
+    final FooterStrings footer = ref.watch(footerStringsProvider);
     final AppLanguage lang = ref.watch(languageProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final citiesAsync = ref.watch(citiesProvider);
@@ -55,12 +78,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double heroHeight = screenSize.height * 0.60;
     final double contentTopOffset =
         (heroHeight - kToolbarHeight - (isShortDevice ? 20 : 8)).clamp(0.0, heroHeight);
-    final double mainContentLift = isShortDevice ? -8 : -14;
+    final double mainContentLift = isShortDevice ? -8.0 : -14.0;
+    final double footerBottomPadding =
+        FloatingBottomNav.homeFooterClearance(context) - 12;
+    final int year = DateTime.now().year;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: _footerDark,
         body: Stack(
           children: <Widget>[
             SizedBox(
@@ -213,73 +239,243 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   SliverToBoxAdapter(
                     child: Transform.translate(
                       offset: Offset(0, mainContentLift),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(12, 20, 12, 120),
-                        decoration: const BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
-                        ),
-                        child: Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          categoriesAsync.when(
-                            data: (categories) => _CategoriesGrid(
-                              categories: categories,
-                              language: lang,
-                              onTap: (c) => _openSearch(category: c.key),
+                          Container(
+                            padding: const EdgeInsets.only(top: 20),
+                            decoration: const BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(kRadius)),
                             ),
-                            loading: () => const _CategoriesGridSkeleton(),
-                            error: (err, _) => Text('${t.loadError}: $err'),
-                          ),
-                          const SizedBox(height: 24),
-                          _CitiesSectionHeader(
-                            title: t.homeCitiesTitle,
-                            subtitle: t.homeCitiesSubtitle,
-                          ),
-                          const SizedBox(height: 6),
-                          citiesAsync.when(
-                            data: (cities) => Column(
-                              children: cities
-                                  .map(
-                                    (city) => _CityCard(
-                                      city: city,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: <Widget>[
+                                  categoriesAsync.when(
+                                    data: (categories) => _CategoriesGrid(
+                                      categories: categories,
                                       language: lang,
-                                      onTap: () => _openSearch(cityId: city.id),
+                                      onTap: (c) => _openSearch(category: c.key),
                                     ),
-                                  )
-                                  .toList(growable: false),
-                            ),
-                            loading: () => const _CitiesListSkeleton(),
-                            error: (err, _) => Text('${t.loadError}: $err'),
-                          ),
-                          const SizedBox(height: 24),
-                          HomeSectionTitle(title: t.homeFeaturedTitle),
-                          featuredAsync.when(
-                            data: (items) {
-                              final double cardWidth = MediaQuery.sizeOf(context).width * 0.85;
-                              final double carouselHeight = cardWidth * 10 / 16 + 76;
-                              return SizedBox(
-                                height: carouselHeight,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: EdgeInsets.zero,
-                                  children: items
-                                      .map(
-                                        (item) => FeaturedCard(
-                                          width: cardWidth,
-                                          establishment: item,
-                                          onTap: () => context.push(AppRoute.detail(item.id)),
+                                    loading: () => const _CategoriesGridSkeleton(),
+                                    error: (err, _) => Text('${t.loadError}: $err'),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  _CitiesSectionHeader(
+                                    title: t.homeCitiesTitle,
+                                    subtitle: t.homeCitiesSubtitle,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  citiesAsync.when(
+                                    data: (cities) => Column(
+                                      children: cities
+                                          .map(
+                                            (city) => _CityCard(
+                                              city: city,
+                                              language: lang,
+                                              onTap: () => _openSearch(cityId: city.id),
+                                            ),
+                                          )
+                                          .toList(growable: false),
+                                    ),
+                                    loading: () => const _CitiesListSkeleton(),
+                                    error: (err, _) => Text('${t.loadError}: $err'),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  HomeSectionTitle(title: t.homeFeaturedTitle),
+                                  featuredAsync.when(
+                                    data: (items) {
+                                      final double cardWidth =
+                                          MediaQuery.sizeOf(context).width * 0.85;
+                                      final double carouselHeight =
+                                          cardWidth * 10 / 16 + 76;
+                                      return SizedBox(
+                                        height: carouselHeight,
+                                        child: ListView(
+                                          scrollDirection: Axis.horizontal,
+                                          padding: EdgeInsets.zero,
+                                          children: items
+                                              .map(
+                                                (item) => FeaturedCard(
+                                                  width: cardWidth,
+                                                  establishment: item,
+                                                  onTap: () => context.push(
+                                                    AppRoute.detail(item.id),
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(growable: false),
                                         ),
-                                      )
-                                      .toList(growable: false),
-                                ),
-                              );
-                            },
-                            loading: () => const _FeaturedCarouselSkeleton(),
-                            error: (err, _) => Text('${t.loadError}: $err'),
+                                      );
+                                    },
+                                    loading: () => const _FeaturedCarouselSkeleton(),
+                                    error: (err, _) => Text('${t.loadError}: $err'),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
+                          ColoredBox(
+                            color: _footerDark,
+                            child: Stack(
+                              clipBehavior: Clip.hardEdge,
+                              children: <Widget>[
+                                Positioned(
+                                  right: -48,
+                                  bottom: -48,
+                                  child: IgnorePointer(
+                                    child: Transform.rotate(
+                                      angle: 12 * 3.141592653589793 / 180,
+                                      child: Opacity(
+                                        opacity: 0.25,
+                                        child: ColorFiltered(
+                                          colorFilter: const ColorFilter.mode(
+                                            Colors.white,
+                                            BlendMode.srcIn,
+                                          ),
+                                          child: Image.asset(
+                                            AppAssets.tile,
+                                            width: screenSize.width * 0.72,
+                                            fit: BoxFit.contain,
+                                            filterQuality: FilterQuality.medium,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    12,
+                                    32,
+                                    12,
+                                    footerBottomPadding,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: <Widget>[
+                                      Text(
+                                        footer.description,
+                                        style: _footerText.copyWith(color: Colors.white),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Wrap(
+                                        spacing: 16,
+                                        runSpacing: 8,
+                                        children: const <Widget>[
+                                          _FooterSocialButton(
+                                            url: 'https://facebook.com/reserva',
+                                            svg: _footerFacebookSvg,
+                                          ),
+                                          _FooterSocialButton(
+                                            url: 'https://instagram.com/reserva',
+                                            svg: _footerInstagramSvg,
+                                          ),
+                                          _FooterSocialButton(
+                                            url: 'https://linkedin.com/company/reserva',
+                                            svg: _footerLinkedinSvg,
+                                          ),
+                                          _FooterSocialButton(
+                                            url: 'https://tiktok.com/@reserva',
+                                            svg: _footerTiktokSvg,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Expanded(
+                                            child: _FooterColumn(
+                                              title: footer.legal,
+                                              links: <_FooterLink>[
+                                                _FooterLink(
+                                                  label: footer.privacy,
+                                                  url: FooterUrls.privacy,
+                                                ),
+                                                _FooterLink(
+                                                  label: footer.terms,
+                                                  url: FooterUrls.terms,
+                                                ),
+                                                _FooterLink(
+                                                  label: footer.cookie,
+                                                  url: FooterUrls.cookie,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 24),
+                                          Expanded(
+                                            child: _FooterColumn(
+                                              title: footer.partner,
+                                              links: <_FooterLink>[
+                                                _FooterLink(
+                                                  label: footer.becomeHost,
+                                                  url: FooterUrls.becomeHost,
+                                                ),
+                                                _FooterLink(
+                                                  label: footer.partnerLogin,
+                                                  url: FooterUrls.partnerLogin,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      _FooterColumn(
+                                        title: footer.contact,
+                                        links: <_FooterLink>[
+                                          _FooterLink(
+                                            label: FooterStrings.phoneNumber,
+                                            url: 'tel:+212704749027',
+                                          ),
+                                          _FooterLink(
+                                            label: 'contact@reserva.ma',
+                                            url: 'mailto:contact@reserva.ma',
+                                          ),
+                                          _FooterLink(label: footer.address),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Center(
+                                        child: Image.asset(
+                                          AppAssets.paymentFooter,
+                                          height: 48,
+                                          fit: BoxFit.contain,
+                                          filterQuality: FilterQuality.high,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      const Divider(color: Color(0x1AFFFFFF), height: 1),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Expanded(
+                                            child: Text(
+                                              '© $year Reserva. ${footer.rights}',
+                                              style: _footerText,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          _FooterNexusCredit(createdBy: footer.createdBy),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (mainContentLift < 0)
+                            ColoredBox(
+                              color: _footerDark,
+                              child: SizedBox(height: -mainContentLift),
+                            ),
                         ],
-                        ),
                       ),
                     ),
                   ),
@@ -290,6 +486,134 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
     );
+  }
+
+  static const String _footerFacebookSvg = '''
+<svg viewBox="0 0 24 24" fill="none" stroke="#A3A3A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+</svg>''';
+
+  static const String _footerInstagramSvg = '''
+<svg viewBox="0 0 24 24" fill="none" stroke="#A3A3A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+</svg>''';
+
+  static const String _footerTiktokSvg = '''
+<svg viewBox="0 0 24 24" fill="none" stroke="#A3A3A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+</svg>''';
+
+  static const String _footerLinkedinSvg = '''
+<svg viewBox="0 0 24 24" fill="none" stroke="#A3A3A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+  <rect width="4" height="12" x="2" y="9" />
+  <circle cx="4" cy="4" r="2" />
+</svg>''';
+}
+
+class _FooterColumn extends StatelessWidget {
+  const _FooterColumn({required this.title, required this.links});
+
+  final String title;
+  final List<_FooterLink> links;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(title.toUpperCase(), style: _HomeScreenState._footerTitle),
+        const SizedBox(height: 12),
+        for (final _FooterLink link in links) ...<Widget>[
+          _FooterLinkTile(link: link),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _FooterLink {
+  const _FooterLink({required this.label, this.url});
+
+  final String label;
+  final String? url;
+}
+
+class _FooterLinkTile extends StatelessWidget {
+  const _FooterLinkTile({required this.link});
+
+  final _FooterLink link;
+
+  @override
+  Widget build(BuildContext context) {
+    if (link.url == null) {
+      return Text(link.label, style: _HomeScreenState._footerText);
+    }
+
+    return InkWell(
+      onTap: () => _launchFooterUrl(link.url!),
+      child: Text(link.label, style: _HomeScreenState._footerText),
+    );
+  }
+}
+
+class _FooterSocialButton extends StatelessWidget {
+  const _FooterSocialButton({required this.url, required this.svg});
+
+  final String url;
+  final String svg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0x0DFFFFFF),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => _launchFooterUrl(url),
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Center(child: SvgPicture.string(svg, width: 20, height: 20)),
+        ),
+      ),
+    );
+  }
+}
+
+class _FooterNexusCredit extends StatelessWidget {
+  const _FooterNexusCredit({required this.createdBy});
+
+  final String createdBy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      alignment: WrapAlignment.end,
+      children: <Widget>[
+        Text('$createdBy ', style: _HomeScreenState._footerText),
+        InkWell(
+          onTap: () => _launchFooterUrl('https://nexusdweb.com'),
+          child: Text(
+            'NexusDWeb',
+            style: _HomeScreenState._footerText.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _launchFooterUrl(String url) async {
+  final Uri uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
 

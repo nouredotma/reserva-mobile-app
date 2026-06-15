@@ -1,22 +1,21 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reservamobile/core/assets/app_assets.dart';
 import 'package:reservamobile/core/bootstrap/native_splash.dart';
+import 'package:reservamobile/core/providers/reserva_providers.dart';
 
 /// Branded splash matching the web app's mobile preloader (`preloader.tsx`).
-class SplashPreloader extends StatefulWidget {
+class SplashPreloader extends ConsumerStatefulWidget {
   const SplashPreloader({required this.onComplete, super.key});
 
   final VoidCallback onComplete;
 
   @override
-  State<SplashPreloader> createState() => _SplashPreloaderState();
+  ConsumerState<SplashPreloader> createState() => _SplashPreloaderState();
 }
 
-class _SplashPreloaderState extends State<SplashPreloader>
+class _SplashPreloaderState extends ConsumerState<SplashPreloader>
     with TickerProviderStateMixin {
-  static const Duration _displayDuration = Duration(seconds: 3);
   static const Duration _logoDuration = Duration(milliseconds: 2400);
   static const Duration _exitDuration = Duration(milliseconds: 700);
 
@@ -34,8 +33,6 @@ class _SplashPreloaderState extends State<SplashPreloader>
   late final Animation<double> _revealFactor;
   late final Animation<double> _logoShift;
   late final Animation<double> _fadeOpacity;
-
-  Timer? _exitTimer;
 
   @override
   void initState() {
@@ -57,14 +54,18 @@ class _SplashPreloaderState extends State<SplashPreloader>
       CurvedAnimation(parent: _exitController, curve: exitCurve),
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NativeSplash.remove();
-      _logoController.forward();
-      _exitTimer = Timer(_displayDuration, _startExit);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runSplashSequence());
   }
 
-  Future<void> _startExit() async {
+  Future<void> _runSplashSequence() async {
+    NativeSplash.remove();
+    await Future.wait(<Future<void>>[
+      _logoController.forward(),
+      ref.read(categoriesProvider.future).then((_) {}),
+      ref.read(citiesProvider.future).then((_) {}),
+      ref.read(featuredEstablishmentsProvider.future).then((_) {}),
+    ]);
+
     if (!mounted) return;
     await _exitController.forward();
     if (mounted) {
@@ -74,7 +75,6 @@ class _SplashPreloaderState extends State<SplashPreloader>
 
   @override
   void dispose() {
-    _exitTimer?.cancel();
     _logoController.dispose();
     _exitController.dispose();
     super.dispose();

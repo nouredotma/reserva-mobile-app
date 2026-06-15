@@ -6,6 +6,7 @@ abstract final class AppAssets {
   static const String login = 'assets/images/login.png';
   static const String tile = 'assets/images/tile.webp';
   static const String tileJpg = 'assets/images/tile.jpg';
+  static const String paymentFooter = 'assets/images/paymentfooter.png';
 
   /// City cover images copied from the web app's `public/cities` folder.
   static const Map<String, String> cityImages = <String, String>{

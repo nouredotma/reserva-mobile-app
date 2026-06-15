@@ -17,6 +17,13 @@ class FloatingBottomNav extends ConsumerWidget {
   static const _innerPaddingHorizontal = 4.0;
   static const _pillInset = 4.0;
   static const _outerMargin = 12.0;
+  static const double _barHeight = 52.0;
+
+  /// Space for home scroll content to clear the floating nav pill.
+  static double homeFooterClearance(BuildContext context) {
+    final double bottomInset = MediaQuery.paddingOf(context).bottom;
+    return _outerMargin + _barHeight + _innerPaddingVertical * 2 + bottomInset;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,7 +54,7 @@ class FloatingBottomNav extends ConsumerWidget {
             vertical: _innerPaddingVertical,
           ),
           child: SizedBox(
-            height: 52,
+            height: _barHeight,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final itemCount = destinations.length;
